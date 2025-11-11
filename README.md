@@ -1,2 +1,2 @@
 # planejaMaisBackend
-Backend do projeto Planeja +
+Backend do projeto Planeja + projeto de gerenciamento de gastos
