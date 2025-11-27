@@ -434,6 +434,40 @@ var conflict = () => __async(void 0, null, function* () {
   };
 });
 
+// src/models/user-model.ts
+var yup = __toESM(require("yup"));
+var userSchema = yup.object({
+  name: yup.string().required("O nome \xE9 obrigat\xF3rio"),
+  user: yup.string().required("O usu\xE1rio \xE9 obrigat\xF3rio"),
+  email: yup.string().email("E-mail inv\xE1lido").required("O e-mail \xE9 obrigat\xF3rio"),
+  lastEmail: yup.string().email("\xDAltimo e-mail inv\xE1lido").required("O \xFAltimo e-mail \xE9 obrigat\xF3rio"),
+  birthday: yup.date().typeError("Data de nascimento inv\xE1lida").required("A data de nascimento \xE9 obrigat\xF3ria"),
+  passwordHash: yup.string().required("O hash da senha \xE9 obrigat\xF3rio"),
+  createdAt: yup.string().matches(
+    /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z$/,
+    "Data deve estar no formato ISO 8601"
+  ).required("A data \xE9 obrigat\xF3ria"),
+  updatedAt: yup.string().matches(
+    /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z$/,
+    "Data deve estar no formato ISO 8601"
+  ).required("A data \xE9 obrigat\xF3ria"),
+  isActive: yup.boolean().required("O estado 'isActive' \xE9 obrigat\xF3rio")
+});
+function validateUser(user) {
+  return __async(this, null, function* () {
+    try {
+      yield userSchema.validate(user, {
+        abortEarly: false,
+        stripUnknown: true
+      });
+      return true;
+    } catch (err) {
+      console.log(err);
+      return false;
+    }
+  });
+}
+
 // src/repositories/login-repository.ts
 var import_mongodb = require("mongodb");
 var import_dotenv = __toESM(require_main());
@@ -531,7 +565,6 @@ var findAndModifyUser = (user, body, validEmail) => __async(void 0, null, functi
       const filter2 = { email: body.email };
       const search1 = yield collection.findOne(filter2);
       if (!search1) {
-        updatedUser.lastEmail = body.email;
         validEmail = true;
       }
     }
@@ -603,10 +636,8 @@ var auth = (data) => __async(void 0, null, function* () {
   let decoded;
   if (data && secret) {
     try {
-      console.log(data);
       const token = data.split(" ")[1];
       decoded = import_jsonwebtoken.default.verify(token, secret);
-      console.log(decoded);
     } catch (e) {
       return null;
     }
@@ -901,6 +932,11 @@ var getMyAcountService = (bodyValue) => __async(void 0, null, function* () {
   return response;
 });
 var createUserService = (bodyValue) => __async(void 0, null, function* () {
+  const isvalid = yield validateUser(bodyValue);
+  if (!isvalid) {
+    const response2 = yield badRequest();
+    return response2;
+  }
   bodyValue.passwordHash = yield hashedPass(bodyValue.passwordHash);
   const data = yield insertUser(bodyValue);
   let response = null;
@@ -935,11 +971,18 @@ var userAutenticationService = (bodyValue) => __async(void 0, null, function* ()
   }
   return response;
 });
-var updateUserService = (user, bodyValue, authHeader) => __async(void 0, null, function* () {
-  const validEmail = bodyValue.email === bodyValue.lastEmail ? true : false;
+var updateUserService = (bodyValue, authHeader) => __async(void 0, null, function* () {
+  const isvalid = yield validateUser(bodyValue);
+  if (!isvalid) {
+    const response2 = yield badRequest();
+    return response2;
+  }
   const decoded = yield auth(authHeader);
   let response = null;
   if (decoded) {
+    console.log("aqui");
+    const fullData = yield autenticateUserSimple(decoded.user);
+    const validEmail = bodyValue.email === (fullData == null ? void 0 : fullData.email) ? true : false;
     const data = yield findAndModifyUser(decoded.user, bodyValue, validEmail);
     if (data.message === "updated") {
       response = yield ok(data);
@@ -1016,8 +1059,7 @@ var userAutentication = (req, res) => __async(void 0, null, function* () {
 var updateUser = (req, res) => __async(void 0, null, function* () {
   const authHeader = req.headers.authorization;
   const bodyValue = req.body;
-  const user = req.params.user;
-  const response = yield updateUserService(user, bodyValue, authHeader);
+  const response = yield updateUserService(bodyValue, authHeader);
   res.status(response.statusCode).json(response.body);
 });
 var newPassword = (req, res) => __async(void 0, null, function* () {
@@ -1041,8 +1083,8 @@ router.get("/login/forgotPassword/:email", forgotPass);
 router.post("/login/create", createUser);
 router.post("/login/autentication", userAutentication);
 router.post("/login/newPassword", newPassword);
-router.patch("/login/update/:user", updateUser);
-router.delete("/login/delete/:user", deleteUser);
+router.patch("/login/update", updateUser);
+router.delete("/login/delete", deleteUser);
 var routes_default = router;
 
 // src/app.ts

@@ -9,10 +9,10 @@ export const auth = async (data: string | undefined) => {
 
         try {
     
-            console.log(data)
+            // console.log(data)
             const token = data.split(" ")[1];
             decoded = jwt.verify(token, secret)
-            console.log(decoded)
+            // console.log(decoded)
     
         } catch {
             return null

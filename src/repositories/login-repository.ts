@@ -144,7 +144,7 @@ export const findAndModifyUser = async (
       const search1 = await collection.findOne(filter);
 
       if (!search1) {
-        updatedUser.lastEmail = body.email;
+        // updatedUser.lastEmail = body.email;
         validEmail = true;
       }
     }

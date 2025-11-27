@@ -6,7 +6,7 @@ import {
   ok,
   unauthorized,
 } from "../utils/http-helper";
-import { UserModel } from "../models/user-model";
+import { UserModel, validateUser } from "../models/user-model";
 import {
   autenticateUser,
   autenticateUserSimple,
@@ -104,6 +104,13 @@ export const getMyAcountService = async (bodyValue: string | undefined) => {
 };
 
 export const createUserService = async (bodyValue: UserModel) => {
+  const isvalid = await validateUser(bodyValue);
+
+  if (!isvalid) {
+    const response = await badRequest();
+    return response;
+  }
+
   // criptografando a senha
   bodyValue.passwordHash = await hashedPass(bodyValue.passwordHash);
 
@@ -154,17 +161,23 @@ export const userAutenticationService = async (
 };
 
 export const updateUserService = async (
-  user: string,
   bodyValue: UserModel,
   authHeader: string | undefined
 ) => {
-  const validEmail = bodyValue.email === bodyValue.lastEmail ? true : false;
-
+  const isvalid = await validateUser(bodyValue);
+  if (!isvalid) {
+    const response = await badRequest();
+    return response;
+  }
+  
   const decoded = await auth(authHeader);
-    let response = null;
-    
-
+  
+  let response = null;
   if (decoded) {
+    console.log("aqui")
+    const fullData = await autenticateUserSimple(decoded.user);
+    const validEmail = bodyValue.email === fullData?.email ? true : false;
+
     const data = await findAndModifyUser(decoded.user, bodyValue, validEmail);
 
     if (data.message === "updated") {
@@ -201,10 +214,7 @@ export const newPasswordService = async (
   return response;
 };
 
-export const deleteUserService = async (
-  
-  authHeader: string | undefined
-) => {
+export const deleteUserService = async (authHeader: string | undefined) => {
   let data: any = null;
   const validation = await auth(authHeader); /// verificação do token
   if (validation && typeof validation !== "string") {

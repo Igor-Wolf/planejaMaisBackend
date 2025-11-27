@@ -23,8 +23,8 @@ router.post("/login/create", createUser);
 router.post("/login/autentication", userAutentication);
 router.post("/login/newPassword", newPassword);
 
-router.patch("/login/update/:user", updateUser);
+router.patch("/login/update", updateUser);
 
-router.delete("/login/delete/:user", deleteUser);
+router.delete("/login/delete", deleteUser);
 
 export default router;

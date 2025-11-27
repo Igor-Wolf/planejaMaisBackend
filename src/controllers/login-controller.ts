@@ -58,9 +58,8 @@ export const userAutentication = async (req: Request, res: Response) => {
 export const updateUser = async (req: Request, res: Response) => {
   const authHeader = req.headers.authorization;
   const bodyValue = req.body;
-  const user = req.params.user;
 
-  const response = await updateUserService(user, bodyValue, authHeader);
+  const response = await updateUserService(bodyValue, authHeader);
   res.status(response.statusCode).json(response.body);
 };
 export const newPassword = async (req: Request, res: Response) => {
