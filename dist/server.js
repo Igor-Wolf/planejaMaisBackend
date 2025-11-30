@@ -672,7 +672,7 @@ var getPasswordResetEmail = (userName, resetLink) => `
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
         .header {
-            background-color: #4CAF50;
+            background: linear-gradient(90deg, #00dd8f, #007bff);
             color: white;
             padding: 20px;
             text-align: center;
@@ -683,7 +683,7 @@ var getPasswordResetEmail = (userName, resetLink) => `
         }
         .button {
             display: inline-block;
-            background-color: #4CAF50;
+            background: linear-gradient(90deg, #00dd8f, #007bff);
             color: white;
             text-decoration: none;
             padding: 10px 20px;
@@ -691,7 +691,7 @@ var getPasswordResetEmail = (userName, resetLink) => `
             margin-top: 20px;
         }
         .button:hover {
-            background-color: #45a049;
+            background: linear-gradient(90deg, #33f0b0, #3395ff);
         }
         .footer {
             background-color: #f4f4f4;
@@ -787,7 +787,7 @@ var getAutenticateAccount = (userName, resetLink) => `
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
         .header {
-            background-color: #4CAF50;
+            background: linear-gradient(90deg, #00dd8f, #007bff);
             color: white;
             padding: 20px;
             text-align: center;
@@ -798,7 +798,7 @@ var getAutenticateAccount = (userName, resetLink) => `
         }
         .button {
             display: inline-block;
-            background-color: #4CAF50;
+            background: linear-gradient(90deg, #00dd8f, #007bff);
             color: white;
             text-decoration: none;
             padding: 10px 20px;
@@ -806,7 +806,7 @@ var getAutenticateAccount = (userName, resetLink) => `
             margin-top: 20px;
         }
         .button:hover {
-            background-color: #45a049;
+            background: linear-gradient(90deg, #33f0b0, #3395ff);
         }
         .footer {
             background-color: #f4f4f4;
