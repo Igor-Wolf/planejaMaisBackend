@@ -70,7 +70,7 @@ export const forgotPassService = async (email: string | undefined) => {
     const user = verifyEmail.user;
     let token = jwt.sign({ user }, secret, { expiresIn: "1h" });
     token = encodeURIComponent(token);
-    const restEmail = `https://login-model-one.vercel.app/NewPassword/${token}`;
+    const restEmail = `https://planeja-mais-seven.vercel.app/auth/change-password/${token}`;
 
     const data = await sendEmail(
       verifyEmail.email,
@@ -148,7 +148,7 @@ export const userAutenticationService = async (
   } else if (data && secret && data.isActive === false) {
     let token = jwt.sign({ user }, secret, { expiresIn: "1h" });
     token = encodeURIComponent(token);
-    const restEmail = `https://login-model-one.vercel.app/AutenticateAccount/${token}`;
+    const restEmail = `https://planeja-mais-seven.vercel.app/auth/login/${token}`;
 
     const mail = await sendEmail2(data.email, "Email teste", restEmail, user);
 
