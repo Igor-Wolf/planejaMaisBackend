@@ -148,7 +148,7 @@ export const userAutenticationService = async (
   } else if (data && secret && data.isActive === false) {
     let token = jwt.sign({ user }, secret, { expiresIn: "1h" });
     token = encodeURIComponent(token);
-    const restEmail = `https://planeja-mais-seven.vercel.app/auth/login/${token}`;
+    const restEmail = `https://planeja-mais-seven.vercel.app/auth/confirm-account/${token}`;
 
     const mail = await sendEmail2(data.email, "Autenticar Conta", restEmail, user);
 

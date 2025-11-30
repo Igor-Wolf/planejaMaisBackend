@@ -963,7 +963,7 @@ var userAutenticationService = (bodyValue) => __async(void 0, null, function* ()
   } else if (data && secret && data.isActive === false) {
     let token = import_jsonwebtoken2.default.sign({ user }, secret, { expiresIn: "1h" });
     token = encodeURIComponent(token);
-    const restEmail = `https://planeja-mais-seven.vercel.app/auth/login/${token}`;
+    const restEmail = `https://planeja-mais-seven.vercel.app/auth/confirm-account/${token}`;
     const mail = yield sendEmail2(data.email, "Autenticar Conta", restEmail, user);
     response = yield conflict();
   } else {
