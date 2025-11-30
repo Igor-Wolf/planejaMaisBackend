@@ -74,7 +74,7 @@ export const forgotPassService = async (email: string | undefined) => {
 
     const data = await sendEmail(
       verifyEmail.email,
-      "Email teste",
+      "Recuperação de Senha",
       restEmail,
       verifyEmail.user
     );
@@ -150,7 +150,7 @@ export const userAutenticationService = async (
     token = encodeURIComponent(token);
     const restEmail = `https://planeja-mais-seven.vercel.app/auth/login/${token}`;
 
-    const mail = await sendEmail2(data.email, "Email teste", restEmail, user);
+    const mail = await sendEmail2(data.email, "Autenticar Conta", restEmail, user);
 
     response = await conflict();
   } else {
