@@ -906,10 +906,10 @@ var forgotPassService = (email) => __async(void 0, null, function* () {
     const user = verifyEmail.user;
     let token = import_jsonwebtoken2.default.sign({ user }, secret, { expiresIn: "1h" });
     token = encodeURIComponent(token);
-    const restEmail = `https://login-model-one.vercel.app/NewPassword/${token}`;
+    const restEmail = `https://planeja-mais-seven.vercel.app/auth/change-password/${token}`;
     const data = yield sendEmail(
       verifyEmail.email,
-      "Email teste",
+      "Recupera\xE7\xE3o de Senha",
       restEmail,
       verifyEmail.user
     );
@@ -963,8 +963,8 @@ var userAutenticationService = (bodyValue) => __async(void 0, null, function* ()
   } else if (data && secret && data.isActive === false) {
     let token = import_jsonwebtoken2.default.sign({ user }, secret, { expiresIn: "1h" });
     token = encodeURIComponent(token);
-    const restEmail = `https://login-model-one.vercel.app/AutenticateAccount/${token}`;
-    const mail = yield sendEmail2(data.email, "Email teste", restEmail, user);
+    const restEmail = `https://planeja-mais-seven.vercel.app/auth/login/${token}`;
+    const mail = yield sendEmail2(data.email, "Autenticar Conta", restEmail, user);
     response = yield conflict();
   } else {
     response = yield unauthorized();
