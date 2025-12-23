@@ -1,7 +1,7 @@
 import { response } from "express";
 import { GoalModel, validateGoal } from "../models/goal-model";
 import { auth } from "../utils/auth";
-import { badRequest, conflict, created, ok } from "../utils/http-helper";
+import { badRequest, conflict, created, deleted, ok } from "../utils/http-helper";
 import {
   deleteGoalRepository,
   getMyGoalRepository,
@@ -113,7 +113,7 @@ export const deleteGoalService = async (
     const fullData = await deleteGoalRepository(data.user, year, month);
 
     if (fullData) {
-      response = await ok(fullData);
+      response = await deleted();
     } else {
       response = await badRequest();
     }

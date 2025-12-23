@@ -14,7 +14,21 @@ export const created = async (): Promise<HttpResponse> => {
     
     return {
         statusCode: 201,
-        body: "created"
+        body: {message: "created"}
+    }
+}
+export const deleted = async (): Promise<HttpResponse> => {
+    
+    return {
+        statusCode: 200,
+        body: {message: "deleted"}
+    }
+}
+export const updated = async (): Promise<HttpResponse> => {
+    
+    return {
+        statusCode: 200,
+        body: {message: "updated"}
     }
 }
 

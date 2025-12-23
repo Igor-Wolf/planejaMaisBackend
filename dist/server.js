@@ -418,7 +418,13 @@ var ok = (data) => __async(void 0, null, function* () {
 var created = () => __async(void 0, null, function* () {
   return {
     statusCode: 201,
-    body: "created"
+    body: { message: "created" }
+  };
+});
+var deleted = () => __async(void 0, null, function* () {
+  return {
+    statusCode: 200,
+    body: { message: "deleted" }
   };
 });
 var badRequest = () => __async(void 0, null, function* () {
@@ -1264,7 +1270,7 @@ var deleteGoalService = (authHeader, year, month) => __async(void 0, null, funct
   if (data && typeof data !== "string") {
     const fullData = yield deleteGoalRepository(data.user, year, month);
     if (fullData) {
-      response = yield ok(fullData);
+      response = yield deleted();
     } else {
       response = yield badRequest();
     }
