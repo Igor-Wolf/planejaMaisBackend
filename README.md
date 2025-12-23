@@ -1,5 +1,5 @@
 # planejaMaisBackend
-Backend do projeto Planeja + projeto de gerenciamento de gastos
+Backend do projeto Planeja + projeto de gerenciamento de gastos.
 
 
 Para criar a imagem docker utilizei:
