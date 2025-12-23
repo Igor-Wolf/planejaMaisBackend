@@ -1082,7 +1082,7 @@ var deleteUser = (req, res) => __async(void 0, null, function* () {
 // src/models/goal-model.ts
 var yup2 = __toESM(require("yup"));
 var goalSchema = yup2.object({
-  month: yup2.number().integer("O valor deve ser um n\xFAmero inteiro").positive("O valor deve ser positivo").required("Campo Obrigat\xF3rio"),
+  month: yup2.number().integer("O valor deve ser um n\xFAmero inteiro").min(0, "Deve ser maior que zero").required("Campo Obrigat\xF3rio"),
   year: yup2.number().integer("O valor deve ser um n\xFAmero inteiro").positive("O valor deve ser positivo").required("Campo Obrigat\xF3rio"),
   goal: yup2.number().typeError("Deve ser um valor valido").required("Campo Obrigat\xF3rio"),
   updatedAt: yup2.string().matches(
