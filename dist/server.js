@@ -1668,7 +1668,7 @@ var getAllDateValuesRepository = (user, date3) => __async(void 0, null, function
   const result = yield collection.find({
     user,
     date: {
-      $regex: date3,
+      $regex: `^${date3}`,
       // contém
       $options: "i"
       // case-insensitive (opcional)

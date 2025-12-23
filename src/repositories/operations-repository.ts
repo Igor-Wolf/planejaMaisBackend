@@ -56,7 +56,7 @@ export const getAllDateValuesRepository = async (
     .find({
       user: user,
       date: {
-        $regex: date, // contém
+        $regex: `^${date}`, // contém
         $options: "i", // case-insensitive (opcional)
       },
     })
