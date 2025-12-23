@@ -134,7 +134,7 @@ export const userAutenticationService = async (
   let response = null;
 
   let user = bodyValue.user;
-
+  
   if (data && secret && data.isActive === true) {
     if (!bodyValue.remember) {
       //gerar o token para futuros gets
@@ -174,7 +174,7 @@ export const updateUserService = async (
   
   let response = null;
   if (decoded) {
-    console.log("aqui")
+    
     const fullData = await autenticateUserSimple(decoded.user);
     const validEmail = bodyValue.email === fullData?.email ? true : false;
 
