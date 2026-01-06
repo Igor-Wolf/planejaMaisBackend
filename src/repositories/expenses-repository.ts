@@ -35,17 +35,16 @@ export const getExpenseByIdRepository = async (user: string, _id: string) => {
   const collection = await connectDatabase();
 
   if (ObjectId.isValid(_id)) {
-    
     const result = await collection.findOne({
       user: user,
       _id: new ObjectId(_id),
     });
-    
+
     if (result) {
       return result;
     }
   }
-    
+
   return;
 };
 export const getExpenseByDescriptionRepository = async (
@@ -114,6 +113,34 @@ export const getExpenseByDateRepository = async (
 
   return;
 };
+export const getExpenseAllRepository = async (
+  user: string,
+  skip: number = 0,
+  limit: number = 0,
+  order: string
+) => {
+  const collection = await connectDatabase();
+  const sort = order === "asc" ? 1 : -1;
+
+  try {
+    const result = await collection
+      .find({
+        user: user,
+      })
+      .sort({ updatedAt: sort })
+      .skip(parseInt(skip))
+      .limit(parseInt(limit))
+      .toArray();
+
+    if (result && result.length > 0) {
+      return result;
+    }
+
+    return;
+  } catch {
+    return;
+  }
+};
 
 // -------------------------------------------------------- INSERT / CREATE
 
@@ -123,7 +150,10 @@ export const insertExpense = async (value: ExpensesModel) => {
   const result = await collection.insertOne(value);
 
   if (result) {
-    return { message: "created" };
+    return {
+      message: "created",
+      _id: result.insertedId,
+    };
   }
 
   return;

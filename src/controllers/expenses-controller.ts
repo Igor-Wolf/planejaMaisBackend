@@ -2,6 +2,7 @@ import express, { Request, Response } from "express";
 import {
   createExpenseService,
   deleteExpenseService,
+  getExpenseAllService,
   getExpenseByCategoryService,
   getExpenseByDateService,
   getExpenseByDescriptionService,
@@ -45,6 +46,13 @@ export const getExpenseByDate = async (req: Request, res: Response) => {
   const authHeader = req.headers.authorization;
   const { date } = req.params;
   const response = await getExpenseByDateService(authHeader, date);
+  res.status(response.statusCode).json(response.body);
+};
+export const getExpenseAll = async (req: Request, res: Response) => {
+  const authHeader = req.headers.authorization;
+  const { skip, limit, order } = req.query;
+
+  const response = await getExpenseAllService(authHeader, skip, limit, order);
   res.status(response.statusCode).json(response.body);
 };
 

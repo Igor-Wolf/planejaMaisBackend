@@ -14,7 +14,7 @@ export const goalSchema = yup.object({
   month: yup
     .number()
     .integer("O valor deve ser um número inteiro")
-    .min(0, "Deve ser maior que zero")
+    .min(0, "Deve ser maior ou igual a zero")
     .required("Campo Obrigatório"),
   year: yup
     .number()

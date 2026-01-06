@@ -19,6 +19,7 @@ import {
 import {
   createExpense,
   deleteExpense,
+  getExpenseAll,
   getExpenseByCategory,
   getExpenseByDate,
   getExpenseByDescription,
@@ -63,6 +64,7 @@ router.get("/expense/myExpenseById/:id", getExpenseById);
 router.get("/expense/myExpenseByDescription/:description", getExpenseByDescription);
 router.get("/expense/myExpenseByCategory/:category", getExpenseByCategory);
 router.get("/expense/myExpenseByDate/:date", getExpenseByDate);
+router.get("/expense/myExpenseAll", getExpenseAll)
 
 router.post("/expense/create", createExpense);
 

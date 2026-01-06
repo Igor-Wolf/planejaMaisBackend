@@ -1,6 +1,7 @@
 import { ExpensesModel, validateExpense } from "../models/expenses.model";
 import {
   deleteExpenseRepository,
+  getExpenseAllRepository,
   getExpenseByCategoryRepository,
   getExpenseByDateRepository,
   getExpenseByDescriptionRepository,
@@ -29,6 +30,7 @@ export const createExpenseService = async (
     const data = await insertExpense(bodyValue);
     if (data) {
       response = await created();
+      response.body = data
     } else {
       response = await conflict();
     }
@@ -122,6 +124,31 @@ export const getExpenseByDateService = async (
 
   if (data && typeof data !== "string") {
     const fullData = await getExpenseByDateRepository(data.user, date);
+
+    if (fullData) {
+      response = await ok(fullData);
+    } else {
+      response = await badRequest();
+    }
+  } else {
+    response = await badRequest();
+  }
+
+  return response;
+};
+export const getExpenseAllService = async (
+  authHeader: string | undefined,
+  skip: number,
+  limit: number,
+  order: string
+) => {
+  let response = null;
+  let data = null;
+
+  data = await auth(authHeader); /// verificação do token
+
+  if (data && typeof data !== "string") {
+    const fullData = await getExpenseAllRepository(data.user, skip, limit, order);
 
     if (fullData) {
       response = await ok(fullData);

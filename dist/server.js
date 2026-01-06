@@ -1088,7 +1088,7 @@ var deleteUser = (req, res) => __async(void 0, null, function* () {
 // src/models/goal-model.ts
 var yup2 = __toESM(require("yup"));
 var goalSchema = yup2.object({
-  month: yup2.number().integer("O valor deve ser um n\xFAmero inteiro").min(0, "Deve ser maior que zero").required("Campo Obrigat\xF3rio"),
+  month: yup2.number().integer("O valor deve ser um n\xFAmero inteiro").min(0, "Deve ser maior ou igual a zero").required("Campo Obrigat\xF3rio"),
   year: yup2.number().integer("O valor deve ser um n\xFAmero inteiro").positive("O valor deve ser positivo").required("Campo Obrigat\xF3rio"),
   goal: yup2.number().typeError("Deve ser um valor valido").required("Campo Obrigat\xF3rio"),
   updatedAt: yup2.string().matches(
@@ -1421,11 +1421,29 @@ var getExpenseByDateRepository = (user, date3) => __async(void 0, null, function
   }
   return;
 });
+var getExpenseAllRepository = (user, skip = 0, limit = 0, order) => __async(void 0, null, function* () {
+  const collection = yield connectDatabase3();
+  const sort = order === "asc" ? 1 : -1;
+  try {
+    const result = yield collection.find({
+      user
+    }).sort({ updatedAt: sort }).skip(parseInt(skip)).limit(parseInt(limit)).toArray();
+    if (result && result.length > 0) {
+      return result;
+    }
+    return;
+  } catch (e) {
+    return;
+  }
+});
 var insertExpense = (value) => __async(void 0, null, function* () {
   const collection = yield connectDatabase3();
   const result = yield collection.insertOne(value);
   if (result) {
-    return { message: "created" };
+    return {
+      message: "created",
+      _id: result.insertedId
+    };
   }
   return;
 });
@@ -1480,6 +1498,7 @@ var createExpenseService = (bodyValue, authHeader) => __async(void 0, null, func
     const data = yield insertExpense(bodyValue);
     if (data) {
       response = yield created();
+      response.body = data;
     } else {
       response = yield conflict();
     }
@@ -1545,6 +1564,22 @@ var getExpenseByDateService = (authHeader, date3) => __async(void 0, null, funct
   data = yield auth(authHeader);
   if (data && typeof data !== "string") {
     const fullData = yield getExpenseByDateRepository(data.user, date3);
+    if (fullData) {
+      response = yield ok(fullData);
+    } else {
+      response = yield badRequest();
+    }
+  } else {
+    response = yield badRequest();
+  }
+  return response;
+});
+var getExpenseAllService = (authHeader, skip, limit, order) => __async(void 0, null, function* () {
+  let response = null;
+  let data = null;
+  data = yield auth(authHeader);
+  if (data && typeof data !== "string") {
+    const fullData = yield getExpenseAllRepository(data.user, skip, limit, order);
     if (fullData) {
       response = yield ok(fullData);
     } else {
@@ -1626,6 +1661,12 @@ var getExpenseByDate = (req, res) => __async(void 0, null, function* () {
   const authHeader = req.headers.authorization;
   const { date: date3 } = req.params;
   const response = yield getExpenseByDateService(authHeader, date3);
+  res.status(response.statusCode).json(response.body);
+});
+var getExpenseAll = (req, res) => __async(void 0, null, function* () {
+  const authHeader = req.headers.authorization;
+  const { skip, limit, order } = req.query;
+  const response = yield getExpenseAllService(authHeader, skip, limit, order);
   res.status(response.statusCode).json(response.body);
 });
 var deleteExpense = (req, res) => __async(void 0, null, function* () {
@@ -1762,6 +1803,7 @@ router.get("/expense/myExpenseById/:id", getExpenseById);
 router.get("/expense/myExpenseByDescription/:description", getExpenseByDescription);
 router.get("/expense/myExpenseByCategory/:category", getExpenseByCategory);
 router.get("/expense/myExpenseByDate/:date", getExpenseByDate);
+router.get("/expense/myExpenseAll", getExpenseAll);
 router.post("/expense/create", createExpense);
 router.patch("/expense/update/:id", updateExpense);
 router.delete("/expense/delete/:id", deleteExpense);
