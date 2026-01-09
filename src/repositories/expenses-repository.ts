@@ -93,9 +93,14 @@ export const getExpenseByCategoryRepository = async (
 };
 export const getExpenseByDateRepository = async (
   user: string,
-  date: string
+  date: string,
+  skip: number = 0,
+  limit: number = 0,
+  order: string,
 ) => {
   const collection = await connectDatabase();
+  const sort = order === "asc" ? 1 : -1;
+  
 
   const result = await collection
     .find({
@@ -105,7 +110,11 @@ export const getExpenseByDateRepository = async (
         $options: "i", // case-insensitive (opcional)
       },
     })
+    .sort({ date: sort })
+    .skip(parseInt(skip))
+    .limit(parseInt(limit))
     .toArray();
+    
 
   if (result && result.length > 0) {
     return result;
@@ -128,6 +137,66 @@ export const getExpenseAllRepository = async (
         user: user,
       })
       .sort({ updatedAt: sort })
+      .skip(parseInt(skip))
+      .limit(parseInt(limit))
+      .toArray();
+
+    if (result && result.length > 0) {
+      return result;
+    }
+
+    return;
+  } catch {
+    return;
+  }
+};
+export const getExpenseByFilterRepository = async (
+  user: string,
+  skip: number = 0,
+  limit: number = 0,
+  order: string,
+  startDate: string,
+  endDate: string,
+  category: string,
+  description: string,
+  startValue: number,
+  endValue: number
+) => {
+  const collection = await connectDatabase();
+  const sort = order === "asc" ? 1 : -1;
+
+  const filter: any = {
+    user,
+  };
+
+  if (startDate || endDate) {
+    filter.date = {};
+    if (startDate) filter.date.$gte = startDate;
+    if (endDate) filter.date.$lte = endDate;
+  }
+  if (startValue || endValue) {
+    filter.value = {};
+    if (startValue) filter.value.$gte = parseFloat(startValue);
+    if (endValue) filter.value.$lte = parseFloat(endValue);
+  }
+
+  if (category) {
+    filter.category = {
+      $regex: category, // contém
+      $options: "i", // case-insensitive (opcional)
+    };
+  }
+  if (description) {
+    filter.description = {
+      $regex: description, // contém
+      $options: "i", // case-insensitive (opcional)
+    };
+  }
+
+  try {
+    const result = await collection
+      .find(filter)
+      .sort({ date: sort })
       .skip(parseInt(skip))
       .limit(parseInt(limit))
       .toArray();

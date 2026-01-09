@@ -1405,8 +1405,9 @@ var getExpenseByCategoryRepository = (user, category) => __async(void 0, null, f
   }
   return;
 });
-var getExpenseByDateRepository = (user, date3) => __async(void 0, null, function* () {
+var getExpenseByDateRepository = (user, date3, skip = 0, limit = 0, order) => __async(void 0, null, function* () {
   const collection = yield connectDatabase3();
+  const sort = order === "asc" ? 1 : -1;
   const result = yield collection.find({
     user,
     date: {
@@ -1415,7 +1416,7 @@ var getExpenseByDateRepository = (user, date3) => __async(void 0, null, function
       $options: "i"
       // case-insensitive (opcional)
     }
-  }).toArray();
+  }).sort({ date: sort }).skip(parseInt(skip)).limit(parseInt(limit)).toArray();
   if (result && result.length > 0) {
     return result;
   }
@@ -1428,6 +1429,48 @@ var getExpenseAllRepository = (user, skip = 0, limit = 0, order) => __async(void
     const result = yield collection.find({
       user
     }).sort({ updatedAt: sort }).skip(parseInt(skip)).limit(parseInt(limit)).toArray();
+    if (result && result.length > 0) {
+      return result;
+    }
+    return;
+  } catch (e) {
+    return;
+  }
+});
+var getExpenseByFilterRepository = (user, skip = 0, limit = 0, order, startDate, endDate, category, description, startValue, endValue) => __async(void 0, null, function* () {
+  const collection = yield connectDatabase3();
+  const sort = order === "asc" ? 1 : -1;
+  const filter = {
+    user
+  };
+  if (startDate || endDate) {
+    filter.date = {};
+    if (startDate) filter.date.$gte = startDate;
+    if (endDate) filter.date.$lte = endDate;
+  }
+  if (startValue || endValue) {
+    filter.value = {};
+    if (startValue) filter.value.$gte = parseFloat(startValue);
+    if (endValue) filter.value.$lte = parseFloat(endValue);
+  }
+  if (category) {
+    filter.category = {
+      $regex: category,
+      // contém
+      $options: "i"
+      // case-insensitive (opcional)
+    };
+  }
+  if (description) {
+    filter.description = {
+      $regex: description,
+      // contém
+      $options: "i"
+      // case-insensitive (opcional)
+    };
+  }
+  try {
+    const result = yield collection.find(filter).sort({ date: sort }).skip(parseInt(skip)).limit(parseInt(limit)).toArray();
     if (result && result.length > 0) {
       return result;
     }
@@ -1558,12 +1601,12 @@ var getExpenseByCategoryService = (authHeader, category) => __async(void 0, null
   }
   return response;
 });
-var getExpenseByDateService = (authHeader, date3) => __async(void 0, null, function* () {
+var getExpenseByDateService = (authHeader, date3, skip, limit, order) => __async(void 0, null, function* () {
   let response = null;
   let data = null;
   data = yield auth(authHeader);
   if (data && typeof data !== "string") {
-    const fullData = yield getExpenseByDateRepository(data.user, date3);
+    const fullData = yield getExpenseByDateRepository(data.user, date3, skip, limit, order);
     if (fullData) {
       response = yield ok(fullData);
     } else {
@@ -1580,6 +1623,22 @@ var getExpenseAllService = (authHeader, skip, limit, order) => __async(void 0, n
   data = yield auth(authHeader);
   if (data && typeof data !== "string") {
     const fullData = yield getExpenseAllRepository(data.user, skip, limit, order);
+    if (fullData) {
+      response = yield ok(fullData);
+    } else {
+      response = yield badRequest();
+    }
+  } else {
+    response = yield badRequest();
+  }
+  return response;
+});
+var getExpenseByFilterService = (authHeader, skip, limit, order, startDate, endDate, category, description, startValue, endValue) => __async(void 0, null, function* () {
+  let response = null;
+  let data = null;
+  data = yield auth(authHeader);
+  if (data && typeof data !== "string") {
+    const fullData = yield getExpenseByFilterRepository(data.user, skip, limit, order, startDate, endDate, category, description, startValue, endValue);
     if (fullData) {
       response = yield ok(fullData);
     } else {
@@ -1660,13 +1719,20 @@ var getExpenseByCategory = (req, res) => __async(void 0, null, function* () {
 var getExpenseByDate = (req, res) => __async(void 0, null, function* () {
   const authHeader = req.headers.authorization;
   const { date: date3 } = req.params;
-  const response = yield getExpenseByDateService(authHeader, date3);
+  const { skip, limit, order } = req.query;
+  const response = yield getExpenseByDateService(authHeader, date3, skip, limit, order);
   res.status(response.statusCode).json(response.body);
 });
 var getExpenseAll = (req, res) => __async(void 0, null, function* () {
   const authHeader = req.headers.authorization;
   const { skip, limit, order } = req.query;
   const response = yield getExpenseAllService(authHeader, skip, limit, order);
+  res.status(response.statusCode).json(response.body);
+});
+var getExpenseByFilter = (req, res) => __async(void 0, null, function* () {
+  const authHeader = req.headers.authorization;
+  const { skip, limit, order, startDate, endDate, category, description, startValue, endValue } = req.query;
+  const response = yield getExpenseByFilterService(authHeader, skip, limit, order, startDate, endDate, category, description, startValue, endValue);
   res.status(response.statusCode).json(response.body);
 });
 var deleteExpense = (req, res) => __async(void 0, null, function* () {
@@ -1804,6 +1870,7 @@ router.get("/expense/myExpenseByDescription/:description", getExpenseByDescripti
 router.get("/expense/myExpenseByCategory/:category", getExpenseByCategory);
 router.get("/expense/myExpenseByDate/:date", getExpenseByDate);
 router.get("/expense/myExpenseAll", getExpenseAll);
+router.get("/expense/myExpenseByFilter", getExpenseByFilter);
 router.post("/expense/create", createExpense);
 router.patch("/expense/update/:id", updateExpense);
 router.delete("/expense/delete/:id", deleteExpense);

@@ -23,6 +23,7 @@ import {
   getExpenseByCategory,
   getExpenseByDate,
   getExpenseByDescription,
+  getExpenseByFilter,
   getExpenseById,
   updateExpense,
 } from "./controllers/expenses-controller";
@@ -65,6 +66,7 @@ router.get("/expense/myExpenseByDescription/:description", getExpenseByDescripti
 router.get("/expense/myExpenseByCategory/:category", getExpenseByCategory);
 router.get("/expense/myExpenseByDate/:date", getExpenseByDate);
 router.get("/expense/myExpenseAll", getExpenseAll)
+router.get("/expense/myExpenseByFilter", getExpenseByFilter)
 
 router.post("/expense/create", createExpense);
 

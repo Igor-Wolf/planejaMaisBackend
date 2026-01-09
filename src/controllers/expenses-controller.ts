@@ -6,6 +6,7 @@ import {
   getExpenseByCategoryService,
   getExpenseByDateService,
   getExpenseByDescriptionService,
+  getExpenseByFilterService,
   getExpenseByIdService,
   updateExpenseService,
 } from "../services/expenses-service";
@@ -45,7 +46,8 @@ export const getExpenseByCategory = async (req: Request, res: Response) => {
 export const getExpenseByDate = async (req: Request, res: Response) => {
   const authHeader = req.headers.authorization;
   const { date } = req.params;
-  const response = await getExpenseByDateService(authHeader, date);
+  const { skip, limit, order } = req.query;  
+  const response = await getExpenseByDateService(authHeader, date, skip, limit, order);
   res.status(response.statusCode).json(response.body);
 };
 export const getExpenseAll = async (req: Request, res: Response) => {
@@ -53,6 +55,13 @@ export const getExpenseAll = async (req: Request, res: Response) => {
   const { skip, limit, order } = req.query;
 
   const response = await getExpenseAllService(authHeader, skip, limit, order);
+  res.status(response.statusCode).json(response.body);
+};
+export const getExpenseByFilter = async (req: Request, res: Response) => {
+  const authHeader = req.headers.authorization;
+  const { skip, limit, order, startDate, endDate, category, description, startValue, endValue } = req.query;
+
+  const response = await getExpenseByFilterService(authHeader, skip, limit, order, startDate, endDate, category, description, startValue, endValue);
   res.status(response.statusCode).json(response.body);
 };
 

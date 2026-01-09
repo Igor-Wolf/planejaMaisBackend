@@ -5,6 +5,7 @@ import {
   getExpenseByCategoryRepository,
   getExpenseByDateRepository,
   getExpenseByDescriptionRepository,
+  getExpenseByFilterRepository,
   getExpenseByIdRepository,
   insertExpense,
   updateExpenseRepository,
@@ -115,7 +116,10 @@ export const getExpenseByCategoryService = async (
 };
 export const getExpenseByDateService = async (
   authHeader: string | undefined,
-  date: string
+  date: string,
+  skip: number,
+  limit: number,
+  order: string,
 ) => {
   let response = null;
   let data = null;
@@ -123,7 +127,7 @@ export const getExpenseByDateService = async (
   data = await auth(authHeader); /// verificação do token
 
   if (data && typeof data !== "string") {
-    const fullData = await getExpenseByDateRepository(data.user, date);
+    const fullData = await getExpenseByDateRepository(data.user, date, skip, limit, order);
 
     if (fullData) {
       response = await ok(fullData);
@@ -149,6 +153,37 @@ export const getExpenseAllService = async (
 
   if (data && typeof data !== "string") {
     const fullData = await getExpenseAllRepository(data.user, skip, limit, order);
+
+    if (fullData) {
+      response = await ok(fullData);
+    } else {
+      response = await badRequest();
+    }
+  } else {
+    response = await badRequest();
+  }
+
+  return response;
+};
+export const getExpenseByFilterService = async (
+  authHeader: string | undefined,
+  skip: number,
+  limit: number,
+  order: string,
+  startDate: string,
+  endDate: string,
+  category: string,
+  description: string,
+  startValue: number,
+  endValue: number
+) => {
+  let response = null;
+  let data = null;
+
+  data = await auth(authHeader); /// verificação do token
+
+  if (data && typeof data !== "string") {
+    const fullData = await getExpenseByFilterRepository(data.user, skip, limit, order, startDate, endDate, category, description, startValue, endValue);
 
     if (fullData) {
       response = await ok(fullData);
