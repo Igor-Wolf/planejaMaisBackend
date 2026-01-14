@@ -3,8 +3,9 @@ import { getAllDateValuesService, getAllValuesService } from "../services/operat
 
 export const getAllValues = async (req: Request, res: Response) => {
   const authHeader = req.headers.authorization;
+  const { startDate, endDate, category, description, startValue, endValue } = req.query;
 
-  const response = await getAllValuesService(authHeader);
+  const response = await getAllValuesService(authHeader, startDate, endDate, category, description, startValue, endValue);
   res.status(response.statusCode).json(response.body);
 };
 
@@ -14,3 +15,5 @@ export const getAllDateValues = async (req: Request, res: Response) => {
   const response = await getAllDateValuesService(authHeader, date);
   res.status(response.statusCode).json(response.body);
 };
+
+

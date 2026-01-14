@@ -1765,16 +1765,46 @@ var connectDatabase4 = () => __async(void 0, null, function* () {
   cachedDb4 = database.collection(process.env.COLLECTIONEXPENSES);
   return cachedDb4;
 });
-var getAllValuesRepository = (user) => __async(void 0, null, function* () {
+var getAllValuesRepository = (user, startDate, endDate, category, description, startValue, endValue) => __async(void 0, null, function* () {
   const collection = yield connectDatabase4();
-  const result = yield collection.find({
+  const filter = {
     user
-  }).toArray();
-  ;
-  if (result) {
-    return result;
+  };
+  if (startDate || endDate) {
+    filter.date = {};
+    if (startDate) filter.date.$gte = startDate;
+    if (endDate) filter.date.$lte = endDate;
   }
-  return;
+  if (startValue || endValue) {
+    filter.value = {};
+    if (startValue) filter.value.$gte = parseFloat(startValue);
+    if (endValue) filter.value.$lte = parseFloat(endValue);
+  }
+  if (category) {
+    filter.category = {
+      $regex: category,
+      // contém
+      $options: "i"
+      // case-insensitive (opcional)
+    };
+  }
+  if (description) {
+    filter.description = {
+      $regex: description,
+      // contém
+      $options: "i"
+      // case-insensitive (opcional)
+    };
+  }
+  try {
+    const result = yield collection.find(filter).toArray();
+    if (result && result.length > 0) {
+      return result;
+    }
+    return;
+  } catch (e) {
+    return;
+  }
 });
 var getAllDateValuesRepository = (user, date3) => __async(void 0, null, function* () {
   const collection = yield connectDatabase4();
@@ -1794,12 +1824,12 @@ var getAllDateValuesRepository = (user, date3) => __async(void 0, null, function
 });
 
 // src/services/operations-service.ts
-var getAllValuesService = (authHeader) => __async(void 0, null, function* () {
+var getAllValuesService = (authHeader, startDate, endDate, category, description, startValue, endValue) => __async(void 0, null, function* () {
   let response = null;
   let data = null;
   data = yield auth(authHeader);
   if (data && typeof data !== "string") {
-    const fullData = yield getAllValuesRepository(data.user);
+    const fullData = yield getAllValuesRepository(data.user, startDate, endDate, category, description, startValue, endValue);
     if (fullData) {
       let values = 0;
       fullData.forEach((element) => {
@@ -1840,7 +1870,8 @@ var getAllDateValuesService = (authHeader, date3) => __async(void 0, null, funct
 // src/controllers/operations-controller.ts
 var getAllValues = (req, res) => __async(void 0, null, function* () {
   const authHeader = req.headers.authorization;
-  const response = yield getAllValuesService(authHeader);
+  const { startDate, endDate, category, description, startValue, endValue } = req.query;
+  const response = yield getAllValuesService(authHeader, startDate, endDate, category, description, startValue, endValue);
   res.status(response.statusCode).json(response.body);
 });
 var getAllDateValues = (req, res) => __async(void 0, null, function* () {

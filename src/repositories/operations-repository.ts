@@ -31,20 +31,57 @@ const closeDatabase = async () => {
 
 // -------------------------------------------------------- GET / READ
 
-export const getAllValuesRepository = async (user: string) => {
+export const getAllValuesRepository = async (
+  user: string,
+  startDate: string,
+  endDate: string,
+  category: string,
+  description: string,
+  startValue: number,
+  endValue: number
+) => {
   const collection = await connectDatabase();
 
-  const result = await collection.find({
-    user: user,
-  }).toArray();;
+  const filter: any = {
+    user,
+  };
 
-  if (result) {
-    return result;
+  if (startDate || endDate) {
+    filter.date = {};
+    if (startDate) filter.date.$gte = startDate;
+    if (endDate) filter.date.$lte = endDate;
+  }
+  if (startValue || endValue) {
+    filter.value = {};
+    if (startValue) filter.value.$gte = parseFloat(startValue);
+    if (endValue) filter.value.$lte = parseFloat(endValue);
   }
 
-  return;
-};
+  if (category) {
+    filter.category = {
+      $regex: category, // contém
+      $options: "i", // case-insensitive (opcional)
+    };
+  }
+  if (description) {
+    filter.description = {
+      $regex: description, // contém
+      $options: "i", // case-insensitive (opcional)
+    };
+  }
 
+  try {
+    const result = await collection.find(filter).toArray();
+
+    if (result && result.length > 0) {
+      return result;
+    }
+
+    return;
+  } catch {
+    return;
+  }
+};
 
 export const getAllDateValuesRepository = async (
   user: string,

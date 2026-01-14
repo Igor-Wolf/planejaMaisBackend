@@ -5,14 +5,20 @@ import {
 import { auth } from "../utils/auth";
 import { badRequest, ok } from "../utils/http-helper";
 
-export const getAllValuesService = async (authHeader: string | undefined) => {
+export const getAllValuesService = async (authHeader: string | undefined,
+  startDate: string,
+  endDate: string,
+  category: string,
+  description: string,
+  startValue: number,
+  endValue: number) => {
   let response = null;
   let data = null;
 
   data = await auth(authHeader); /// verificação do token
 
   if (data && typeof data !== "string") {
-    const fullData = await getAllValuesRepository(data.user);
+    const fullData = await getAllValuesRepository(data.user, startDate, endDate, category, description, startValue, endValue);
 
     if (fullData) {
       let values = 0;
