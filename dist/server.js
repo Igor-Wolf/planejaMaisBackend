@@ -1088,6 +1088,7 @@ var deleteUser = (req, res) => __async(void 0, null, function* () {
 // src/models/goal-model.ts
 var yup2 = __toESM(require("yup"));
 var goalSchema = yup2.object({
+  title: yup2.string().required("T\xEDtulo \xE9 obrigat\xF3rio"),
   month: yup2.number().integer("O valor deve ser um n\xFAmero inteiro").min(0, "Deve ser maior ou igual a zero").required("Campo Obrigat\xF3rio"),
   year: yup2.number().integer("O valor deve ser um n\xFAmero inteiro").positive("O valor deve ser positivo").required("Campo Obrigat\xF3rio"),
   goal: yup2.number().typeError("Deve ser um valor valido").required("Campo Obrigat\xF3rio"),
@@ -1127,45 +1128,58 @@ var connectDatabase2 = () => __async(void 0, null, function* () {
   cachedDb2 = database.collection(process.env.COLLECTIONGOAL);
   return cachedDb2;
 });
-var getMyGoalRepository = (user, year, month) => __async(void 0, null, function* () {
+var getMyGoalRepository = (user, skip = 0, limit = 0, order, year, month, startGoal, endGoal, title) => __async(void 0, null, function* () {
   const collection = yield connectDatabase2();
-  const result = yield collection.findOne({
-    user,
-    month,
-    year
-  });
-  if (result) {
-    return result;
+  const sort = order === "asc" ? 1 : -1;
+  const filter = {
+    user
+  };
+  if (startGoal || endGoal) {
+    filter.goal = {};
+    if (startGoal) filter.goal.$gte = parseFloat(startGoal);
+    if (endGoal) filter.goal.$lte = parseFloat(endGoal);
   }
-  return;
+  if (year) {
+    filter.year = parseInt(year);
+  }
+  if (month) {
+    filter.month = parseInt(month);
+  }
+  if (title) {
+    filter.title = {
+      $regex: title,
+      // contém
+      $options: "i"
+      // case-insensitive (opcional)
+    };
+  }
+  try {
+    const result = yield collection.find(filter).sort({ updatedAt: sort }).skip(parseInt(skip)).limit(parseInt(limit)).toArray();
+    if (result && result.length > 0) {
+      return result;
+    }
+    return [];
+  } catch (e) {
+    return;
+  }
 });
 var insertGoal = (value) => __async(void 0, null, function* () {
   const collection = yield connectDatabase2();
-  const result = yield collection.findOneAndUpdate(
-    {
-      user: value.user,
-      month: value.month,
-      year: value.year
-    },
-    { $setOnInsert: value },
-    {
-      upsert: true,
-      returnDocument: "before"
-      // IMPORTANTE
-    }
-  );
+  const result = yield collection.insertOne(value);
   if (result) {
-    return;
+    return {
+      message: "created",
+      _id: result.insertedId
+    };
   }
-  return { message: "created" };
+  return;
 });
-var deleteGoalRepository = (user, year, month) => __async(void 0, null, function* () {
+var deleteGoalRepository = (user, _id) => __async(void 0, null, function* () {
   const collection = yield connectDatabase2();
   try {
     const filter = {
       user,
-      year,
-      month
+      _id: new import_mongodb2.ObjectId(_id)
     };
     const result = yield collection.deleteOne(filter);
     if (result.deletedCount === 1) {
@@ -1178,13 +1192,12 @@ var deleteGoalRepository = (user, year, month) => __async(void 0, null, function
     return;
   }
 });
-var updateGoalRepository = (user, year, month, bodyValue) => __async(void 0, null, function* () {
+var updateGoalRepository = (user, year, month, bodyValue, _id) => __async(void 0, null, function* () {
   const collection = yield connectDatabase2();
   try {
     const filter = {
       user,
-      year,
-      month
+      _id: new import_mongodb2.ObjectId(_id)
     };
     const result = yield collection.replaceOne(filter, bodyValue);
     if (result.modifiedCount === 1) {
@@ -1199,12 +1212,12 @@ var updateGoalRepository = (user, year, month, bodyValue) => __async(void 0, nul
 });
 
 // src/services/goal-service.ts
-var getMyGoalService = (authHeader, year, month) => __async(void 0, null, function* () {
+var getMyGoalService = (authHeader, skip, limit, order, year, month, startGoal, endGoal, title) => __async(void 0, null, function* () {
   let response = null;
   let data = null;
   data = yield auth(authHeader);
   if (data && typeof data !== "string") {
-    const fullData = yield getMyGoalRepository(data.user, year, month);
+    const fullData = yield getMyGoalRepository(data.user, skip, limit, order, year, month, startGoal, endGoal, title);
     if (fullData) {
       response = yield ok(fullData);
     } else {
@@ -1228,15 +1241,13 @@ var createGoalService = (bodyValue, authHeader) => __async(void 0, null, functio
     const data = yield insertGoal(bodyValue);
     if (data) {
       response = yield created();
-    } else {
-      response = yield conflict();
     }
   } else {
     response = yield badRequest();
   }
   return response;
 });
-var updateGoalService = (authHeader, bodyValue) => __async(void 0, null, function* () {
+var updateGoalService = (authHeader, bodyValue, id) => __async(void 0, null, function* () {
   let response = null;
   let data = null;
   const isvalid = yield validateGoal(bodyValue);
@@ -1251,7 +1262,8 @@ var updateGoalService = (authHeader, bodyValue) => __async(void 0, null, functio
       data.user,
       bodyValue.year,
       bodyValue.month,
-      bodyValue
+      bodyValue,
+      id
     );
     if (fullData) {
       response = yield ok(fullData);
@@ -1263,12 +1275,12 @@ var updateGoalService = (authHeader, bodyValue) => __async(void 0, null, functio
   }
   return response;
 });
-var deleteGoalService = (authHeader, year, month) => __async(void 0, null, function* () {
+var deleteGoalService = (authHeader, id) => __async(void 0, null, function* () {
   let response = null;
   let data = null;
   data = yield auth(authHeader);
   if (data && typeof data !== "string") {
-    const fullData = yield deleteGoalRepository(data.user, year, month);
+    const fullData = yield deleteGoalRepository(data.user, id);
     if (fullData) {
       response = yield deleted();
     } else {
@@ -1289,30 +1301,37 @@ var createGoal = (req, res) => __async(void 0, null, function* () {
 });
 var getMyGoal = (req, res) => __async(void 0, null, function* () {
   const authHeader = req.headers.authorization;
-  const { year, month } = req.params;
+  const { skip, limit, order, year, month, startGoal, endGoal, title } = req.query;
   const response = yield getMyGoalService(
     authHeader,
-    Number(year),
-    Number(month)
+    skip,
+    limit,
+    order,
+    year,
+    month,
+    startGoal,
+    endGoal,
+    title
   );
   res.status(response.statusCode).json(response.body);
 });
 var updateGoal = (req, res) => __async(void 0, null, function* () {
   const authHeader = req.headers.authorization;
   const bodyValue = req.body;
+  const { id } = req.params;
   const response = yield updateGoalService(
     authHeader,
-    bodyValue
+    bodyValue,
+    id
   );
   res.status(response.statusCode).json(response.body);
 });
 var deleteGoal = (req, res) => __async(void 0, null, function* () {
   const authHeader = req.headers.authorization;
-  const { year, month } = req.params;
+  const { id } = req.params;
   const response = yield deleteGoalService(
     authHeader,
-    Number(year),
-    Number(month)
+    id
   );
   res.status(response.statusCode).json(response.body);
 });
@@ -1387,7 +1406,7 @@ var getExpenseByDescriptionRepository = (user, description) => __async(void 0, n
   if (result && result.length > 0) {
     return result;
   }
-  return;
+  return [];
 });
 var getExpenseByCategoryRepository = (user, category) => __async(void 0, null, function* () {
   const collection = yield connectDatabase3();
@@ -1403,7 +1422,7 @@ var getExpenseByCategoryRepository = (user, category) => __async(void 0, null, f
   if (result && result.length > 0) {
     return result;
   }
-  return;
+  return [];
 });
 var getExpenseByDateRepository = (user, date3, skip = 0, limit = 0, order) => __async(void 0, null, function* () {
   const collection = yield connectDatabase3();
@@ -1420,7 +1439,7 @@ var getExpenseByDateRepository = (user, date3, skip = 0, limit = 0, order) => __
   if (result && result.length > 0) {
     return result;
   }
-  return;
+  return [];
 });
 var getExpenseAllRepository = (user, skip = 0, limit = 0, order) => __async(void 0, null, function* () {
   const collection = yield connectDatabase3();
@@ -1432,7 +1451,7 @@ var getExpenseAllRepository = (user, skip = 0, limit = 0, order) => __async(void
     if (result && result.length > 0) {
       return result;
     }
-    return;
+    return [];
   } catch (e) {
     return;
   }
@@ -1474,7 +1493,7 @@ var getExpenseByFilterRepository = (user, skip = 0, limit = 0, order, startDate,
     if (result && result.length > 0) {
       return result;
     }
-    return;
+    return [];
   } catch (e) {
     return;
   }
@@ -1801,7 +1820,7 @@ var getAllValuesRepository = (user, startDate, endDate, category, description, s
     if (result && result.length > 0) {
       return result;
     }
-    return;
+    return [];
   } catch (e) {
     return;
   }
@@ -1820,7 +1839,7 @@ var getAllDateValuesRepository = (user, date3) => __async(void 0, null, function
   if (result && result.length > 0) {
     return result;
   }
-  return;
+  return [];
 });
 
 // src/services/operations-service.ts
@@ -1892,10 +1911,10 @@ router.post("/login/autentication", userAutentication);
 router.post("/login/newPassword", newPassword);
 router.patch("/login/update", updateUser);
 router.delete("/login/delete", deleteUser);
-router.get("/goal/myGoal/:year/:month", getMyGoal);
+router.get("/goal/myGoal", getMyGoal);
 router.post("/goal/create", createGoal);
-router.patch("/goal/update", updateGoal);
-router.delete("/goal/delete/:year/:month", deleteGoal);
+router.patch("/goal/update/:id", updateGoal);
+router.delete("/goal/delete/:id", deleteGoal);
 router.get("/expense/myExpenseById/:id", getExpenseById);
 router.get("/expense/myExpenseByDescription/:description", getExpenseByDescription);
 router.get("/expense/myExpenseByCategory/:category", getExpenseByCategory);

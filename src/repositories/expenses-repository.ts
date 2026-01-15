@@ -67,7 +67,7 @@ export const getExpenseByDescriptionRepository = async (
     return result;
   }
 
-  return;
+  return [];
 };
 export const getExpenseByCategoryRepository = async (
   user: string,
@@ -89,7 +89,7 @@ export const getExpenseByCategoryRepository = async (
     return result;
   }
 
-  return;
+  return [];
 };
 export const getExpenseByDateRepository = async (
   user: string,
@@ -120,7 +120,7 @@ export const getExpenseByDateRepository = async (
     return result;
   }
 
-  return;
+  return [];
 };
 export const getExpenseAllRepository = async (
   user: string,
@@ -145,7 +145,7 @@ export const getExpenseAllRepository = async (
       return result;
     }
 
-    return;
+    return [];
   } catch {
     return;
   }
@@ -205,7 +205,7 @@ export const getExpenseByFilterRepository = async (
       return result;
     }
 
-    return;
+    return [];
   } catch {
     return;
   }

@@ -51,13 +51,13 @@ router.delete("/login/delete", deleteUser);
 
 //----------------------------------------------------------------------------- GOALS
 
-router.get("/goal/myGoal/:year/:month", getMyGoal);
+router.get("/goal/myGoal", getMyGoal);
 
 router.post("/goal/create", createGoal);
 
-router.patch("/goal/update", updateGoal);
+router.patch("/goal/update/:id", updateGoal);
 
-router.delete("/goal/delete/:year/:month", deleteGoal);
+router.delete("/goal/delete/:id", deleteGoal);
 
 //----------------------------------------------------------------------------- Expenses
 

@@ -1,4 +1,4 @@
-import { MongoClient } from "mongodb";
+import { MongoClient, ObjectId } from "mongodb";
 import dotenv from "dotenv";
 import { GoalModel } from "../models/goal-model";
 
@@ -33,22 +33,58 @@ const closeDatabase = async () => {
 
 export const getMyGoalRepository = async (
   user: string,
+  skip: number = 0,
+  limit: number = 0,
+  order: string,
   year: number,
-  month: number
+  month: number,
+  startGoal: number,
+  endGoal: number,
+  title: string
 ) => {
   const collection = await connectDatabase();
+  const sort = order === "asc" ? 1 : -1;
 
-  const result = await collection.findOne({
-    user: user,
-    month: month,
-    year: year,
-  });
+  const filter: any = {
+    user,
+  };
 
-  if (result) {
-    return result;
+  if (startGoal || endGoal) {
+    filter.goal = {};
+    if (startGoal) filter.goal.$gte = parseFloat(startGoal);
+    if (endGoal) filter.goal.$lte = parseFloat(endGoal);
   }
 
-  return;
+  if (year) {
+    filter.year = parseInt(year);
+  }
+  if (month) {
+    filter.month = parseInt(month);
+  }
+
+  if (title) {
+    filter.title = {
+      $regex: title, // contém
+      $options: "i", // case-insensitive (opcional)
+    };
+  }
+
+  try {
+    const result = await collection
+      .find(filter)
+      .sort({ updatedAt: sort })
+      .skip(parseInt(skip))
+      .limit(parseInt(limit))
+      .toArray();
+
+    if (result && result.length > 0) {
+      return result;
+    }
+
+    return [];
+  } catch {
+    return;
+  }
 };
 
 // -------------------------------------------------------- INSERT / CREATE
@@ -56,51 +92,41 @@ export const getMyGoalRepository = async (
 export const insertGoal = async (value: GoalModel) => {
   const collection = await connectDatabase();
 
-  const result = await collection.findOneAndUpdate(
-    {
-      user: value.user,
-      month: value.month,
-      year: value.year,
-    },
-    { $setOnInsert: value },
-    {
-      upsert: true,
-      returnDocument: "before", // IMPORTANTE
-    }
-  );
+  const result = await collection.insertOne(value);
 
   if (result) {
-    return;
+    return {
+      message: "created",
+      _id: result.insertedId,
+    };
   }
 
-  return { message: "created" };
+  return;
 };
 
 // -------------------------------------------------------- DELETE
 
 export const deleteGoalRepository = async (
   user: string,
-  year: number,
-  month: number
+  _id: string
 ) => {
   const collection = await connectDatabase();
 
   try {
     const filter = {
       user: user,
-      year: year,
-      month: month,
+      _id: new ObjectId(_id)
     };
     const result = await collection.deleteOne(filter);
 
     if (result.deletedCount === 1) {
       return { message: "deleted" };
     } else {
-      return ;
+      return;
     }
   } catch (error) {
     console.error("Error deleting food:", error);
-    return ;
+    return;
   }
 };
 
@@ -110,25 +136,25 @@ export const updateGoalRepository = async (
   user: string,
   year: number,
   month: number,
-  bodyValue: GoalModel
+  bodyValue: GoalModel,
+  _id: string
 ) => {
   const collection = await connectDatabase();
 
   try {
     const filter = {
       user: user,
-      year: year,
-      month: month,
+      _id: new ObjectId(_id)
     };
     const result = await collection.replaceOne(filter, bodyValue);
 
     if (result.modifiedCount === 1) {
       return { message: "updated" };
     } else {
-      return ;
+      return;
     }
   } catch (error) {
     console.error("Error deleting food:", error);
-    return ;
+    return;
   }
 };

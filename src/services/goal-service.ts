@@ -1,7 +1,13 @@
 import { response } from "express";
 import { GoalModel, validateGoal } from "../models/goal-model";
 import { auth } from "../utils/auth";
-import { badRequest, conflict, created, deleted, ok } from "../utils/http-helper";
+import {
+  badRequest,
+  conflict,
+  created,
+  deleted,
+  ok,
+} from "../utils/http-helper";
 import {
   deleteGoalRepository,
   getMyGoalRepository,
@@ -11,8 +17,15 @@ import {
 
 export const getMyGoalService = async (
   authHeader: string | undefined,
+  skip: number,
+  limit: number,
+  order: string,
   year: number,
-  month: number
+  month: number,
+  startGoal: number,
+  endGoal: number,
+  title: string
+
 ) => {
   let response = null;
   let data = null;
@@ -20,7 +33,7 @@ export const getMyGoalService = async (
   data = await auth(authHeader); /// verificação do token
 
   if (data && typeof data !== "string") {
-    const fullData = await getMyGoalRepository(data.user, year, month);
+    const fullData = await getMyGoalRepository(data.user, skip, limit, order, year, month, startGoal, endGoal, title);
 
     if (fullData) {
       response = await ok(fullData);
@@ -52,8 +65,6 @@ export const createGoalService = async (
     const data = await insertGoal(bodyValue);
     if (data) {
       response = await created();
-    } else {
-      response = await conflict();
     }
   } else {
     response = await badRequest();
@@ -64,7 +75,8 @@ export const createGoalService = async (
 
 export const updateGoalService = async (
   authHeader: string | undefined,
-  bodyValue: GoalModel
+  bodyValue: GoalModel,
+  id: string
 ) => {
   let response = null;
   let data = null;
@@ -84,7 +96,8 @@ export const updateGoalService = async (
       data.user,
       bodyValue.year,
       bodyValue.month,
-      bodyValue
+      bodyValue,
+      id
     );
 
     if (fullData) {
@@ -101,8 +114,7 @@ export const updateGoalService = async (
 
 export const deleteGoalService = async (
   authHeader: string | undefined,
-  year: number,
-  month: number
+  id: string
 ) => {
   let response = null;
   let data = null;
@@ -110,7 +122,7 @@ export const deleteGoalService = async (
   data = await auth(authHeader); /// verificação do token
 
   if (data && typeof data !== "string") {
-    const fullData = await deleteGoalRepository(data.user, year, month);
+    const fullData = await deleteGoalRepository(data.user, id);
 
     if (fullData) {
       response = await deleted();

@@ -77,7 +77,7 @@ export const getAllValuesRepository = async (
       return result;
     }
 
-    return;
+    return [];
   } catch {
     return;
   }
@@ -103,5 +103,5 @@ export const getAllDateValuesRepository = async (
     return result;
   }
 
-  return;
+  return [];
 };

@@ -16,34 +16,41 @@ export const createGoal = async (req: Request, res: Response) => {
 
 export const getMyGoal = async (req: Request, res: Response) => {
   const authHeader = req.headers.authorization;
-  const { year, month } = req.params;
+  const { skip, limit, order, year, month, startGoal, endGoal, title } = req.query;
 
   const response = await getMyGoalService(
     authHeader,
-    Number(year),
-    Number(month)
+    skip,
+    limit,
+    order,
+    year,
+    month,
+    startGoal,
+    endGoal,
+    title
   );
   res.status(response.statusCode).json(response.body);
 };
 export const updateGoal = async (req: Request, res: Response) => {
   const authHeader = req.headers.authorization;
   const bodyValue = req.body;
+  const { id } = req.params;
 
   const response = await updateGoalService(
     authHeader,
-    bodyValue
+    bodyValue,
+    id
   );
   res.status(response.statusCode).json(response.body);
 };
 
 export const deleteGoal = async (req: Request, res: Response) => {
   const authHeader = req.headers.authorization;
-  const { year, month } = req.params;
+  const { id } = req.params;
 
   const response = await deleteGoalService(
     authHeader,
-    Number(year),
-    Number(month)
+    id
   );
   res.status(response.statusCode).json(response.body);
 };

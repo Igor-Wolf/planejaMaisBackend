@@ -6,11 +6,14 @@ export interface GoalModel {
   year: number;
   goal: number;
   updatedAt: Date;
+  title: string
 }
 
 import * as yup from "yup";
 
 export const goalSchema = yup.object({
+  title: yup.string().required("Título é obrigatório"),
+  
   month: yup
     .number()
     .integer("O valor deve ser um número inteiro")
