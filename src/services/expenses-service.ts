@@ -1,5 +1,6 @@
 import { ExpensesModel, validateExpense } from "../models/expenses.model";
 import {
+  deleteExpenseAllRepository,
   deleteExpenseRepository,
   getExpenseAllRepository,
   getExpenseByCategoryRepository,
@@ -208,6 +209,29 @@ export const deleteExpenseService = async (
 
   if (data && typeof data !== "string") {
     const fullData = await deleteExpenseRepository(data.user, id);
+
+    if (fullData) {
+      response = await ok(fullData);
+    } else {
+      response = await badRequest();
+    }
+  } else {
+    response = await badRequest();
+  }
+
+  return response;
+};
+export const deleteExpenseAllService = async (
+  authHeader: string | undefined,
+  
+) => {
+  let response = null;
+  let data = null;
+
+  data = await auth(authHeader); /// verificação do token
+
+  if (data && typeof data !== "string") {
+    const fullData = await deleteExpenseAllRepository(data.user);
 
     if (fullData) {
       response = await ok(fullData);

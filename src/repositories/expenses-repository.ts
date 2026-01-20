@@ -96,11 +96,10 @@ export const getExpenseByDateRepository = async (
   date: string,
   skip: number = 0,
   limit: number = 0,
-  order: string,
+  order: string
 ) => {
   const collection = await connectDatabase();
   const sort = order === "asc" ? 1 : -1;
-  
 
   const result = await collection
     .find({
@@ -114,7 +113,6 @@ export const getExpenseByDateRepository = async (
     .skip(parseInt(skip))
     .limit(parseInt(limit))
     .toArray();
-    
 
   if (result && result.length > 0) {
     return result;
@@ -268,6 +266,25 @@ export const deleteExpenseRepository = async (user: string, _id: string) => {
     const result = await collection.deleteOne(filter);
 
     if (result.deletedCount === 1) {
+      return { message: "deleted" };
+    } else {
+      return;
+    }
+  } catch (error) {
+    console.error("Error deleting food:", error);
+    return;
+  }
+};
+export const deleteExpenseAllRepository = async (user: string) => {
+  const collection = await connectDatabase();
+
+  try {
+    const filter = {
+      user: user,
+    };
+    const result = await collection.deleteMany(filter);
+
+    if (result.deletedCount >= 1) {
       return { message: "deleted" };
     } else {
       return;

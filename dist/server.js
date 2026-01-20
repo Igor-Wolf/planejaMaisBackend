@@ -886,232 +886,6 @@ var sendEmail2 = (to, subject, text, user) => __async(void 0, null, function* ()
   }
 });
 
-// src/services/login-service.ts
-var getProtegidoService = (bodyValue) => __async(void 0, null, function* () {
-  let response = null;
-  let data = null;
-  data = yield auth(bodyValue);
-  if (data) {
-    response = yield ok(data);
-  } else {
-    response = yield badRequest();
-  }
-  return response;
-});
-var autenticateAccountByEmailService = (bodyValue) => __async(void 0, null, function* () {
-  let response = null;
-  let data = null;
-  data = yield auth(bodyValue);
-  if (data) {
-    const database = yield findAndModifyActivity(data.user);
-    response = yield ok(database);
-  } else {
-    response = yield badRequest();
-  }
-  return response;
-});
-var forgotPassService = (email) => __async(void 0, null, function* () {
-  let response = null;
-  const secret = process.env.SECRET_KEY;
-  const verifyEmail = yield veryfyEmailDatabase(email);
-  if (verifyEmail && secret) {
-    const user = verifyEmail.user;
-    let token = import_jsonwebtoken2.default.sign({ user }, secret, { expiresIn: "1h" });
-    token = encodeURIComponent(token);
-    const restEmail = `https://planeja-mais-seven.vercel.app/auth/change-password/${token}`;
-    const data = yield sendEmail(
-      verifyEmail.email,
-      "Recupera\xE7\xE3o de Senha",
-      restEmail,
-      verifyEmail.user
-    );
-    response = yield ok(data);
-  } else {
-    response = yield badRequest();
-  }
-  return response;
-});
-var getMyAcountService = (bodyValue) => __async(void 0, null, function* () {
-  let response = null;
-  let data = null;
-  data = yield auth(bodyValue);
-  if (data && typeof data !== "string") {
-    const fullData = yield autenticateUserSimple(data.user);
-    response = yield ok(fullData);
-  } else {
-    response = yield badRequest();
-  }
-  return response;
-});
-var createUserService = (bodyValue) => __async(void 0, null, function* () {
-  const isvalid = yield validateUser(bodyValue);
-  if (!isvalid) {
-    const response2 = yield badRequest();
-    return response2;
-  }
-  bodyValue.passwordHash = yield hashedPass(bodyValue.passwordHash);
-  const data = yield insertUser(bodyValue);
-  let response = null;
-  if (data) {
-    response = yield ok(data);
-  } else {
-    response = yield conflict();
-  }
-  return response;
-});
-var userAutenticationService = (bodyValue) => __async(void 0, null, function* () {
-  const data = yield autenticateUser(bodyValue);
-  const secret = process.env.SECRET_KEY;
-  let response = null;
-  let user = bodyValue.user;
-  if (data && secret && data.isActive === true) {
-    if (!bodyValue.remember) {
-      const token = import_jsonwebtoken2.default.sign({ user }, secret, { expiresIn: "1h" });
-      response = yield ok(token);
-    } else {
-      const token = import_jsonwebtoken2.default.sign({ user }, secret);
-      response = yield ok(token);
-    }
-  } else if (data && secret && data.isActive === false) {
-    let token = import_jsonwebtoken2.default.sign({ user }, secret, { expiresIn: "1h" });
-    token = encodeURIComponent(token);
-    const restEmail = `https://planeja-mais-seven.vercel.app/auth/confirm-account/${token}`;
-    const mail = yield sendEmail2(data.email, "Autenticar Conta", restEmail, user);
-    response = yield conflict();
-  } else {
-    response = yield unauthorized();
-  }
-  return response;
-});
-var updateUserService = (bodyValue, authHeader) => __async(void 0, null, function* () {
-  const isvalid = yield validateUser(bodyValue);
-  if (!isvalid) {
-    const response2 = yield badRequest();
-    return response2;
-  }
-  const decoded = yield auth(authHeader);
-  let response = null;
-  if (decoded) {
-    const fullData = yield autenticateUserSimple(decoded.user);
-    const validEmail = bodyValue.email === (fullData == null ? void 0 : fullData.email) ? true : false;
-    const data = yield findAndModifyUser(decoded.user, bodyValue, validEmail);
-    if (data.message === "updated") {
-      response = yield ok(data);
-    } else if (data.message === "erro") {
-      response = yield conflict();
-    } else {
-      response = yield badRequest();
-    }
-  } else {
-    response = yield badRequest();
-  }
-  return response;
-});
-var newPasswordService = (bodyValue, authHeader) => __async(void 0, null, function* () {
-  const decoded = yield auth(authHeader);
-  let response = null;
-  if (decoded) {
-    const data = yield findAndModifyPassword(
-      decoded.user,
-      bodyValue.passwordHash
-    );
-    response = yield ok(data);
-  } else {
-    response = yield badRequest();
-  }
-  return response;
-});
-var deleteUserService = (authHeader) => __async(void 0, null, function* () {
-  let data = null;
-  const validation = yield auth(authHeader);
-  if (validation && typeof validation !== "string") {
-    data = yield deleteUsers(validation.user);
-  }
-  let response = null;
-  if (data) {
-    response = yield ok(data);
-  } else {
-    response = yield badRequest();
-  }
-  return response;
-});
-
-// src/controllers/login-controller.ts
-var getProtegido = (req, res) => __async(void 0, null, function* () {
-  const authHeader = req.headers.authorization;
-  const response = yield getProtegidoService(authHeader);
-  res.status(response.statusCode).json(response.body);
-});
-var autenticateAccountByEmail = (req, res) => __async(void 0, null, function* () {
-  const authHeader = req.headers.authorization;
-  const response = yield autenticateAccountByEmailService(authHeader);
-  res.status(response.statusCode).json(response.body);
-});
-var forgotPass = (req, res) => __async(void 0, null, function* () {
-  const email = req.params.email;
-  const response = yield forgotPassService(email);
-  res.status(response.statusCode).json(response.body);
-});
-var getMyAcount = (req, res) => __async(void 0, null, function* () {
-  const authHeader = req.headers.authorization;
-  const response = yield getMyAcountService(authHeader);
-  res.status(response.statusCode).json(response.body);
-});
-var createUser = (req, res) => __async(void 0, null, function* () {
-  const bodyValue = req.body;
-  const response = yield createUserService(bodyValue);
-  res.status(response.statusCode).json(response.body);
-});
-var userAutentication = (req, res) => __async(void 0, null, function* () {
-  const bodyValue = req.body;
-  const response = yield userAutenticationService(bodyValue);
-  res.status(response.statusCode).json(response.body);
-});
-var updateUser = (req, res) => __async(void 0, null, function* () {
-  const authHeader = req.headers.authorization;
-  const bodyValue = req.body;
-  const response = yield updateUserService(bodyValue, authHeader);
-  res.status(response.statusCode).json(response.body);
-});
-var newPassword = (req, res) => __async(void 0, null, function* () {
-  const authHeader = req.headers.authorization;
-  const bodyValue = req.body;
-  const response = yield newPasswordService(bodyValue, authHeader);
-  res.status(response.statusCode).json(response.body);
-});
-var deleteUser = (req, res) => __async(void 0, null, function* () {
-  const authHeader = req.headers.authorization;
-  const response = yield deleteUserService(authHeader);
-  res.status(response.statusCode).json(response.body);
-});
-
-// src/models/goal-model.ts
-var yup2 = __toESM(require("yup"));
-var goalSchema = yup2.object({
-  title: yup2.string().required("T\xEDtulo \xE9 obrigat\xF3rio"),
-  month: yup2.number().integer("O valor deve ser um n\xFAmero inteiro").min(0, "Deve ser maior ou igual a zero").required("Campo Obrigat\xF3rio"),
-  year: yup2.number().integer("O valor deve ser um n\xFAmero inteiro").positive("O valor deve ser positivo").required("Campo Obrigat\xF3rio"),
-  goal: yup2.number().typeError("Deve ser um valor valido").required("Campo Obrigat\xF3rio"),
-  updatedAt: yup2.string().matches(
-    /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z$/,
-    "Data deve estar no formato ISO 8601"
-  ).required("A data \xE9 obrigat\xF3ria")
-});
-function validateGoal(goal) {
-  return __async(this, null, function* () {
-    try {
-      yield goalSchema.validate(goal, {
-        abortEarly: false,
-        stripUnknown: true
-      });
-      return true;
-    } catch (err) {
-      console.log(err);
-      return false;
-    }
-  });
-}
-
 // src/repositories/goal-repository.ts
 var import_mongodb2 = require("mongodb");
 var import_dotenv2 = __toESM(require_main());
@@ -1192,6 +966,23 @@ var deleteGoalRepository = (user, _id) => __async(void 0, null, function* () {
     return;
   }
 });
+var deleteGoalAllRepository = (user) => __async(void 0, null, function* () {
+  const collection = yield connectDatabase2();
+  try {
+    const filter = {
+      user
+    };
+    const result = yield collection.deleteMany(filter);
+    if (result.deletedCount >= 1) {
+      return { message: "deleted" };
+    } else {
+      return;
+    }
+  } catch (error) {
+    console.error("Error deleting food:", error);
+    return;
+  }
+});
 var updateGoalRepository = (user, year, month, bodyValue, _id) => __async(void 0, null, function* () {
   const collection = yield connectDatabase2();
   try {
@@ -1210,158 +1001,6 @@ var updateGoalRepository = (user, year, month, bodyValue, _id) => __async(void 0
     return;
   }
 });
-
-// src/services/goal-service.ts
-var getMyGoalService = (authHeader, skip, limit, order, year, month, startGoal, endGoal, title) => __async(void 0, null, function* () {
-  let response = null;
-  let data = null;
-  data = yield auth(authHeader);
-  if (data && typeof data !== "string") {
-    const fullData = yield getMyGoalRepository(data.user, skip, limit, order, year, month, startGoal, endGoal, title);
-    if (fullData) {
-      response = yield ok(fullData);
-    } else {
-      response = yield badRequest();
-    }
-  } else {
-    response = yield badRequest();
-  }
-  return response;
-});
-var createGoalService = (bodyValue, authHeader) => __async(void 0, null, function* () {
-  const isvalid = yield validateGoal(bodyValue);
-  if (!isvalid) {
-    const response2 = yield badRequest();
-    return response2;
-  }
-  const decoded = yield auth(authHeader);
-  let response = null;
-  if (decoded) {
-    bodyValue.user = decoded.user;
-    const data = yield insertGoal(bodyValue);
-    if (data) {
-      response = yield created();
-    }
-  } else {
-    response = yield badRequest();
-  }
-  return response;
-});
-var updateGoalService = (authHeader, bodyValue, id) => __async(void 0, null, function* () {
-  let response = null;
-  let data = null;
-  const isvalid = yield validateGoal(bodyValue);
-  if (!isvalid) {
-    const response2 = yield badRequest();
-    return response2;
-  }
-  data = yield auth(authHeader);
-  if (data && typeof data !== "string") {
-    bodyValue.user = data.user;
-    const fullData = yield updateGoalRepository(
-      data.user,
-      bodyValue.year,
-      bodyValue.month,
-      bodyValue,
-      id
-    );
-    if (fullData) {
-      response = yield ok(fullData);
-    } else {
-      response = yield badRequest();
-    }
-  } else {
-    response = yield badRequest();
-  }
-  return response;
-});
-var deleteGoalService = (authHeader, id) => __async(void 0, null, function* () {
-  let response = null;
-  let data = null;
-  data = yield auth(authHeader);
-  if (data && typeof data !== "string") {
-    const fullData = yield deleteGoalRepository(data.user, id);
-    if (fullData) {
-      response = yield deleted();
-    } else {
-      response = yield badRequest();
-    }
-  } else {
-    response = yield badRequest();
-  }
-  return response;
-});
-
-// src/controllers/goals-controller.ts
-var createGoal = (req, res) => __async(void 0, null, function* () {
-  const authHeader = req.headers.authorization;
-  const bodyValue = req.body;
-  const response = yield createGoalService(bodyValue, authHeader);
-  res.status(response.statusCode).json(response.body);
-});
-var getMyGoal = (req, res) => __async(void 0, null, function* () {
-  const authHeader = req.headers.authorization;
-  const { skip, limit, order, year, month, startGoal, endGoal, title } = req.query;
-  const response = yield getMyGoalService(
-    authHeader,
-    skip,
-    limit,
-    order,
-    year,
-    month,
-    startGoal,
-    endGoal,
-    title
-  );
-  res.status(response.statusCode).json(response.body);
-});
-var updateGoal = (req, res) => __async(void 0, null, function* () {
-  const authHeader = req.headers.authorization;
-  const bodyValue = req.body;
-  const { id } = req.params;
-  const response = yield updateGoalService(
-    authHeader,
-    bodyValue,
-    id
-  );
-  res.status(response.statusCode).json(response.body);
-});
-var deleteGoal = (req, res) => __async(void 0, null, function* () {
-  const authHeader = req.headers.authorization;
-  const { id } = req.params;
-  const response = yield deleteGoalService(
-    authHeader,
-    id
-  );
-  res.status(response.statusCode).json(response.body);
-});
-
-// src/models/expenses.model.ts
-var yup3 = __toESM(require("yup"));
-var expenseSchema = yup3.object({
-  description: yup3.string().required("Descri\xE7\xE3o \xE9 obrigat\xF3ria"),
-  value: yup3.number().typeError("Deve ser um valor valido").required("Campo obrigat\xF3rio"),
-  category: yup3.string().required("Categoria \xE9 obrigat\xF3ria"),
-  date: yup3.date().typeError("Data de nascimento inv\xE1lida").required("A data  \xE9 obrigat\xF3ria"),
-  updatedAt: yup3.string().matches(
-    /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z$/,
-    "Data deve estar no formato ISO 8601"
-  ).required("A data \xE9 obrigat\xF3ria")
-});
-function validateExpense(expense) {
-  return __async(this, null, function* () {
-    try {
-      yield expenseSchema.validate(expense, {
-        abortEarly: false,
-        stripUnknown: true
-      });
-      return true;
-    } catch (err) {
-      console.log(err);
-      return false;
-    }
-  });
-}
 
 // src/repositories/expenses-repository.ts
 var import_mongodb3 = require("mongodb");
@@ -1545,6 +1184,426 @@ var deleteExpenseRepository = (user, _id) => __async(void 0, null, function* () 
     return;
   }
 });
+var deleteExpenseAllRepository = (user) => __async(void 0, null, function* () {
+  const collection = yield connectDatabase3();
+  try {
+    const filter = {
+      user
+    };
+    const result = yield collection.deleteMany(filter);
+    if (result.deletedCount >= 1) {
+      return { message: "deleted" };
+    } else {
+      return;
+    }
+  } catch (error) {
+    console.error("Error deleting food:", error);
+    return;
+  }
+});
+
+// src/services/login-service.ts
+var getProtegidoService = (bodyValue) => __async(void 0, null, function* () {
+  let response = null;
+  let data = null;
+  data = yield auth(bodyValue);
+  if (data) {
+    response = yield ok(data);
+  } else {
+    response = yield badRequest();
+  }
+  return response;
+});
+var autenticateAccountByEmailService = (bodyValue) => __async(void 0, null, function* () {
+  let response = null;
+  let data = null;
+  data = yield auth(bodyValue);
+  if (data) {
+    const database = yield findAndModifyActivity(data.user);
+    response = yield ok(database);
+  } else {
+    response = yield badRequest();
+  }
+  return response;
+});
+var forgotPassService = (email) => __async(void 0, null, function* () {
+  let response = null;
+  const secret = process.env.SECRET_KEY;
+  const verifyEmail = yield veryfyEmailDatabase(email);
+  if (verifyEmail && secret) {
+    const user = verifyEmail.user;
+    let token = import_jsonwebtoken2.default.sign({ user }, secret, { expiresIn: "1h" });
+    token = encodeURIComponent(token);
+    const restEmail = `https://planeja-mais-seven.vercel.app/auth/change-password/${token}`;
+    const data = yield sendEmail(
+      verifyEmail.email,
+      "Recupera\xE7\xE3o de Senha",
+      restEmail,
+      verifyEmail.user
+    );
+    response = yield ok(data);
+  } else {
+    response = yield badRequest();
+  }
+  return response;
+});
+var getMyAcountService = (bodyValue) => __async(void 0, null, function* () {
+  let response = null;
+  let data = null;
+  data = yield auth(bodyValue);
+  if (data && typeof data !== "string") {
+    const fullData = yield autenticateUserSimple(data.user);
+    response = yield ok(fullData);
+  } else {
+    response = yield badRequest();
+  }
+  return response;
+});
+var createUserService = (bodyValue) => __async(void 0, null, function* () {
+  const isvalid = yield validateUser(bodyValue);
+  if (!isvalid) {
+    const response2 = yield badRequest();
+    return response2;
+  }
+  bodyValue.passwordHash = yield hashedPass(bodyValue.passwordHash);
+  const data = yield insertUser(bodyValue);
+  let response = null;
+  if (data) {
+    response = yield ok(data);
+  } else {
+    response = yield conflict();
+  }
+  return response;
+});
+var userAutenticationService = (bodyValue) => __async(void 0, null, function* () {
+  const data = yield autenticateUser(bodyValue);
+  const secret = process.env.SECRET_KEY;
+  let response = null;
+  let user = bodyValue.user;
+  if (data && secret && data.isActive === true) {
+    if (!bodyValue.remember) {
+      const token = import_jsonwebtoken2.default.sign({ user }, secret, { expiresIn: "1h" });
+      response = yield ok(token);
+    } else {
+      const token = import_jsonwebtoken2.default.sign({ user }, secret);
+      response = yield ok(token);
+    }
+  } else if (data && secret && data.isActive === false) {
+    let token = import_jsonwebtoken2.default.sign({ user }, secret, { expiresIn: "1h" });
+    token = encodeURIComponent(token);
+    const restEmail = `https://planeja-mais-seven.vercel.app/auth/confirm-account/${token}`;
+    const mail = yield sendEmail2(data.email, "Autenticar Conta", restEmail, user);
+    response = yield conflict();
+  } else {
+    response = yield unauthorized();
+  }
+  return response;
+});
+var updateUserService = (bodyValue, authHeader) => __async(void 0, null, function* () {
+  const isvalid = yield validateUser(bodyValue);
+  if (!isvalid) {
+    const response2 = yield badRequest();
+    return response2;
+  }
+  const decoded = yield auth(authHeader);
+  let response = null;
+  if (decoded) {
+    const fullData = yield autenticateUserSimple(decoded.user);
+    const validEmail = bodyValue.email === (fullData == null ? void 0 : fullData.email) ? true : false;
+    const data = yield findAndModifyUser(decoded.user, bodyValue, validEmail);
+    if (data.message === "updated") {
+      response = yield ok(data);
+    } else if (data.message === "erro") {
+      response = yield conflict();
+    } else {
+      response = yield badRequest();
+    }
+  } else {
+    response = yield badRequest();
+  }
+  return response;
+});
+var newPasswordService = (bodyValue, authHeader) => __async(void 0, null, function* () {
+  const decoded = yield auth(authHeader);
+  let response = null;
+  if (decoded) {
+    const data = yield findAndModifyPassword(
+      decoded.user,
+      bodyValue.passwordHash
+    );
+    response = yield ok(data);
+  } else {
+    response = yield badRequest();
+  }
+  return response;
+});
+var deleteUserService = (authHeader) => __async(void 0, null, function* () {
+  let data = null;
+  const validation = yield auth(authHeader);
+  if (validation && typeof validation !== "string") {
+    const data2 = yield deleteGoalAllRepository(validation.user);
+    const data1 = yield deleteExpenseAllRepository(validation.user);
+    data = yield deleteUsers(validation.user);
+  }
+  let response = null;
+  if (data) {
+    response = yield ok(data);
+  } else {
+    response = yield badRequest();
+  }
+  return response;
+});
+
+// src/controllers/login-controller.ts
+var getProtegido = (req, res) => __async(void 0, null, function* () {
+  const authHeader = req.headers.authorization;
+  const response = yield getProtegidoService(authHeader);
+  res.status(response.statusCode).json(response.body);
+});
+var autenticateAccountByEmail = (req, res) => __async(void 0, null, function* () {
+  const authHeader = req.headers.authorization;
+  const response = yield autenticateAccountByEmailService(authHeader);
+  res.status(response.statusCode).json(response.body);
+});
+var forgotPass = (req, res) => __async(void 0, null, function* () {
+  const email = req.params.email;
+  const response = yield forgotPassService(email);
+  res.status(response.statusCode).json(response.body);
+});
+var getMyAcount = (req, res) => __async(void 0, null, function* () {
+  const authHeader = req.headers.authorization;
+  const response = yield getMyAcountService(authHeader);
+  res.status(response.statusCode).json(response.body);
+});
+var createUser = (req, res) => __async(void 0, null, function* () {
+  const bodyValue = req.body;
+  const response = yield createUserService(bodyValue);
+  res.status(response.statusCode).json(response.body);
+});
+var userAutentication = (req, res) => __async(void 0, null, function* () {
+  const bodyValue = req.body;
+  const response = yield userAutenticationService(bodyValue);
+  res.status(response.statusCode).json(response.body);
+});
+var updateUser = (req, res) => __async(void 0, null, function* () {
+  const authHeader = req.headers.authorization;
+  const bodyValue = req.body;
+  const response = yield updateUserService(bodyValue, authHeader);
+  res.status(response.statusCode).json(response.body);
+});
+var newPassword = (req, res) => __async(void 0, null, function* () {
+  const authHeader = req.headers.authorization;
+  const bodyValue = req.body;
+  const response = yield newPasswordService(bodyValue, authHeader);
+  res.status(response.statusCode).json(response.body);
+});
+var deleteUser = (req, res) => __async(void 0, null, function* () {
+  const authHeader = req.headers.authorization;
+  const response = yield deleteUserService(authHeader);
+  res.status(response.statusCode).json(response.body);
+});
+
+// src/models/goal-model.ts
+var yup2 = __toESM(require("yup"));
+var goalSchema = yup2.object({
+  title: yup2.string().required("T\xEDtulo \xE9 obrigat\xF3rio"),
+  month: yup2.number().integer("O valor deve ser um n\xFAmero inteiro").min(0, "Deve ser maior ou igual a zero").required("Campo Obrigat\xF3rio"),
+  year: yup2.number().integer("O valor deve ser um n\xFAmero inteiro").positive("O valor deve ser positivo").required("Campo Obrigat\xF3rio"),
+  goal: yup2.number().typeError("Deve ser um valor valido").required("Campo Obrigat\xF3rio"),
+  updatedAt: yup2.string().matches(
+    /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z$/,
+    "Data deve estar no formato ISO 8601"
+  ).required("A data \xE9 obrigat\xF3ria")
+});
+function validateGoal(goal) {
+  return __async(this, null, function* () {
+    try {
+      yield goalSchema.validate(goal, {
+        abortEarly: false,
+        stripUnknown: true
+      });
+      return true;
+    } catch (err) {
+      console.log(err);
+      return false;
+    }
+  });
+}
+
+// src/services/goal-service.ts
+var getMyGoalService = (authHeader, skip, limit, order, year, month, startGoal, endGoal, title) => __async(void 0, null, function* () {
+  let response = null;
+  let data = null;
+  data = yield auth(authHeader);
+  if (data && typeof data !== "string") {
+    const fullData = yield getMyGoalRepository(data.user, skip, limit, order, year, month, startGoal, endGoal, title);
+    if (fullData) {
+      response = yield ok(fullData);
+    } else {
+      response = yield badRequest();
+    }
+  } else {
+    response = yield badRequest();
+  }
+  return response;
+});
+var createGoalService = (bodyValue, authHeader) => __async(void 0, null, function* () {
+  const isvalid = yield validateGoal(bodyValue);
+  if (!isvalid) {
+    const response2 = yield badRequest();
+    return response2;
+  }
+  const decoded = yield auth(authHeader);
+  let response = null;
+  if (decoded) {
+    bodyValue.user = decoded.user;
+    const data = yield insertGoal(bodyValue);
+    if (data) {
+      response = yield created();
+    }
+  } else {
+    response = yield badRequest();
+  }
+  return response;
+});
+var updateGoalService = (authHeader, bodyValue, id) => __async(void 0, null, function* () {
+  let response = null;
+  let data = null;
+  const isvalid = yield validateGoal(bodyValue);
+  if (!isvalid) {
+    const response2 = yield badRequest();
+    return response2;
+  }
+  data = yield auth(authHeader);
+  if (data && typeof data !== "string") {
+    bodyValue.user = data.user;
+    const fullData = yield updateGoalRepository(
+      data.user,
+      bodyValue.year,
+      bodyValue.month,
+      bodyValue,
+      id
+    );
+    if (fullData) {
+      response = yield ok(fullData);
+    } else {
+      response = yield badRequest();
+    }
+  } else {
+    response = yield badRequest();
+  }
+  return response;
+});
+var deleteGoalService = (authHeader, id) => __async(void 0, null, function* () {
+  let response = null;
+  let data = null;
+  data = yield auth(authHeader);
+  if (data && typeof data !== "string") {
+    const fullData = yield deleteGoalRepository(data.user, id);
+    if (fullData) {
+      response = yield deleted();
+    } else {
+      response = yield badRequest();
+    }
+  } else {
+    response = yield badRequest();
+  }
+  return response;
+});
+var deleteGoalAllService = (authHeader) => __async(void 0, null, function* () {
+  let response = null;
+  let data = null;
+  data = yield auth(authHeader);
+  if (data && typeof data !== "string") {
+    const fullData = yield deleteGoalAllRepository(data.user);
+    if (fullData) {
+      response = yield deleted();
+    } else {
+      response = yield badRequest();
+    }
+  } else {
+    response = yield badRequest();
+  }
+  return response;
+});
+
+// src/controllers/goals-controller.ts
+var createGoal = (req, res) => __async(void 0, null, function* () {
+  const authHeader = req.headers.authorization;
+  const bodyValue = req.body;
+  const response = yield createGoalService(bodyValue, authHeader);
+  res.status(response.statusCode).json(response.body);
+});
+var getMyGoal = (req, res) => __async(void 0, null, function* () {
+  const authHeader = req.headers.authorization;
+  const { skip, limit, order, year, month, startGoal, endGoal, title } = req.query;
+  const response = yield getMyGoalService(
+    authHeader,
+    skip,
+    limit,
+    order,
+    year,
+    month,
+    startGoal,
+    endGoal,
+    title
+  );
+  res.status(response.statusCode).json(response.body);
+});
+var updateGoal = (req, res) => __async(void 0, null, function* () {
+  const authHeader = req.headers.authorization;
+  const bodyValue = req.body;
+  const { id } = req.params;
+  const response = yield updateGoalService(
+    authHeader,
+    bodyValue,
+    id
+  );
+  res.status(response.statusCode).json(response.body);
+});
+var deleteGoal = (req, res) => __async(void 0, null, function* () {
+  const authHeader = req.headers.authorization;
+  const { id } = req.params;
+  const response = yield deleteGoalService(
+    authHeader,
+    id
+  );
+  res.status(response.statusCode).json(response.body);
+});
+var deleteGoalAll = (req, res) => __async(void 0, null, function* () {
+  const authHeader = req.headers.authorization;
+  const response = yield deleteGoalAllService(
+    authHeader
+  );
+  res.status(response.statusCode).json(response.body);
+});
+
+// src/models/expenses.model.ts
+var yup3 = __toESM(require("yup"));
+var expenseSchema = yup3.object({
+  description: yup3.string().required("Descri\xE7\xE3o \xE9 obrigat\xF3ria"),
+  value: yup3.number().typeError("Deve ser um valor valido").required("Campo obrigat\xF3rio"),
+  category: yup3.string().required("Categoria \xE9 obrigat\xF3ria"),
+  date: yup3.date().typeError("Data de nascimento inv\xE1lida").required("A data  \xE9 obrigat\xF3ria"),
+  updatedAt: yup3.string().matches(
+    /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z$/,
+    "Data deve estar no formato ISO 8601"
+  ).required("A data \xE9 obrigat\xF3ria")
+});
+function validateExpense(expense) {
+  return __async(this, null, function* () {
+    try {
+      yield expenseSchema.validate(expense, {
+        abortEarly: false,
+        stripUnknown: true
+      });
+      return true;
+    } catch (err) {
+      console.log(err);
+      return false;
+    }
+  });
+}
 
 // src/services/expenses-service.ts
 var createExpenseService = (bodyValue, authHeader) => __async(void 0, null, function* () {
@@ -1684,6 +1743,22 @@ var deleteExpenseService = (authHeader, id) => __async(void 0, null, function* (
   }
   return response;
 });
+var deleteExpenseAllService = (authHeader) => __async(void 0, null, function* () {
+  let response = null;
+  let data = null;
+  data = yield auth(authHeader);
+  if (data && typeof data !== "string") {
+    const fullData = yield deleteExpenseAllRepository(data.user);
+    if (fullData) {
+      response = yield ok(fullData);
+    } else {
+      response = yield badRequest();
+    }
+  } else {
+    response = yield badRequest();
+  }
+  return response;
+});
 var updateExpenseService = (authHeader, bodyValue, id) => __async(void 0, null, function* () {
   let response = null;
   let data = null;
@@ -1758,6 +1833,11 @@ var deleteExpense = (req, res) => __async(void 0, null, function* () {
   const authHeader = req.headers.authorization;
   const { id } = req.params;
   const response = yield deleteExpenseService(authHeader, id);
+  res.status(response.statusCode).json(response.body);
+});
+var deleteExpenseAll = (req, res) => __async(void 0, null, function* () {
+  const authHeader = req.headers.authorization;
+  const response = yield deleteExpenseAllService(authHeader);
   res.status(response.statusCode).json(response.body);
 });
 var updateExpense = (req, res) => __async(void 0, null, function* () {
@@ -1915,6 +1995,7 @@ router.get("/goal/myGoal", getMyGoal);
 router.post("/goal/create", createGoal);
 router.patch("/goal/update/:id", updateGoal);
 router.delete("/goal/delete/:id", deleteGoal);
+router.delete("/goal/deleteAll", deleteGoalAll);
 router.get("/expense/myExpenseById/:id", getExpenseById);
 router.get("/expense/myExpenseByDescription/:description", getExpenseByDescription);
 router.get("/expense/myExpenseByCategory/:category", getExpenseByCategory);
@@ -1924,6 +2005,7 @@ router.get("/expense/myExpenseByFilter", getExpenseByFilter);
 router.post("/expense/create", createExpense);
 router.patch("/expense/update/:id", updateExpense);
 router.delete("/expense/delete/:id", deleteExpense);
+router.delete("/expense/deleteAll", deleteExpenseAll);
 router.get("/operation/allValues", getAllValues);
 router.get("/operation/allDateValues/:date", getAllDateValues);
 var routes_default = router;

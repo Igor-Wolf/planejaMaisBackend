@@ -13,12 +13,14 @@ import {
 import {
   createGoal,
   deleteGoal,
+  deleteGoalAll,
   getMyGoal,
   updateGoal,
 } from "./controllers/goals-controller";
 import {
   createExpense,
   deleteExpense,
+  deleteExpenseAll,
   getExpenseAll,
   getExpenseByCategory,
   getExpenseByDate,
@@ -58,6 +60,7 @@ router.post("/goal/create", createGoal);
 router.patch("/goal/update/:id", updateGoal);
 
 router.delete("/goal/delete/:id", deleteGoal);
+router.delete("/goal/deleteAll", deleteGoalAll);
 
 //----------------------------------------------------------------------------- Expenses
 
@@ -73,6 +76,7 @@ router.post("/expense/create", createExpense);
 router.patch("/expense/update/:id", updateExpense);
 
 router.delete("/expense/delete/:id", deleteExpense);
+router.delete("/expense/deleteAll", deleteExpenseAll);
 
 //----------------------------------------------------------------------------- Operations
 

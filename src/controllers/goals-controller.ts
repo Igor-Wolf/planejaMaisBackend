@@ -1,6 +1,7 @@
 import express, { Request, Response } from "express";
 import {
   createGoalService,
+  deleteGoalAllService,
   deleteGoalService,
   getMyGoalService,
   updateGoalService,
@@ -51,6 +52,16 @@ export const deleteGoal = async (req: Request, res: Response) => {
   const response = await deleteGoalService(
     authHeader,
     id
+  );
+  res.status(response.statusCode).json(response.body);
+};
+export const deleteGoalAll = async (req: Request, res: Response) => {
+  const authHeader = req.headers.authorization;
+  
+
+  const response = await deleteGoalAllService(
+    authHeader
+   
   );
   res.status(response.statusCode).json(response.body);
 };

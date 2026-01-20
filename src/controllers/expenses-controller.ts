@@ -1,6 +1,7 @@
 import express, { Request, Response } from "express";
 import {
   createExpenseService,
+  deleteExpenseAllService,
   deleteExpenseService,
   getExpenseAllService,
   getExpenseByCategoryService,
@@ -70,6 +71,13 @@ export const deleteExpense = async (req: Request, res: Response) => {
   const { id } = req.params;
 
   const response = await deleteExpenseService(authHeader, id);
+  res.status(response.statusCode).json(response.body);
+};
+export const deleteExpenseAll = async (req: Request, res: Response) => {
+  const authHeader = req.headers.authorization;
+  
+
+  const response = await deleteExpenseAllService(authHeader);
   res.status(response.statusCode).json(response.body);
 };
 

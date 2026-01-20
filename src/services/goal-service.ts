@@ -9,6 +9,7 @@ import {
   ok,
 } from "../utils/http-helper";
 import {
+  deleteGoalAllRepository,
   deleteGoalRepository,
   getMyGoalRepository,
   insertGoal,
@@ -123,6 +124,28 @@ export const deleteGoalService = async (
 
   if (data && typeof data !== "string") {
     const fullData = await deleteGoalRepository(data.user, id);
+
+    if (fullData) {
+      response = await deleted();
+    } else {
+      response = await badRequest();
+    }
+  } else {
+    response = await badRequest();
+  }
+
+  return response;
+};
+export const deleteGoalAllService = async (
+  authHeader: string | undefined,  
+) => {
+  let response = null;
+  let data = null;
+
+  data = await auth(authHeader); /// verificação do token
+
+  if (data && typeof data !== "string") {
+    const fullData = await deleteGoalAllRepository(data.user);
 
     if (fullData) {
       response = await deleted();

@@ -26,6 +26,8 @@ import { hashedPass } from "../utils/hashedPass";
 import { sendEmail } from "../utils/forgotPassSender";
 import { NewPasswordModel } from "../models/new-Password-model";
 import { sendEmail2 } from "../utils/autenticateAccountSender";
+import { deleteGoalAllRepository } from "../repositories/goal-repository";
+import { deleteExpenseAllRepository } from "../repositories/expenses-repository";
 
 export const getProtegidoService = async (bodyValue: string | undefined) => {
   let response = null;
@@ -218,7 +220,10 @@ export const deleteUserService = async (authHeader: string | undefined) => {
   let data: any = null;
   const validation = await auth(authHeader); /// verificação do token
   if (validation && typeof validation !== "string") {
+    const data2 = await deleteGoalAllRepository(validation.user)
+    const data1 = await deleteExpenseAllRepository(validation.user)
     data = await deleteUsers(validation.user);
+
   }
   let response = null;
 

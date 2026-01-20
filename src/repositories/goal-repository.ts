@@ -129,6 +129,29 @@ export const deleteGoalRepository = async (
     return;
   }
 };
+export const deleteGoalAllRepository = async (
+  user: string,
+  
+) => {
+  const collection = await connectDatabase();
+
+  try {
+    const filter = {
+      user: user
+      
+    };
+    const result = await collection.deleteMany(filter);
+
+    if (result.deletedCount >= 1) {
+      return { message: "deleted" };
+    } else {
+      return;
+    }
+  } catch (error) {
+    console.error("Error deleting food:", error);
+    return;
+  }
+};
 
 // -------------------------------------------------------- UPDATE
 
