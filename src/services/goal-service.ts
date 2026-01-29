@@ -66,6 +66,10 @@ export const createGoalService = async (
     const data = await insertGoal(bodyValue);
     if (data) {
       response = await created();
+      response.body = data
+    }
+    else {
+      response = await conflict()
     }
   } else {
     response = await badRequest();
@@ -102,7 +106,13 @@ export const updateGoalService = async (
     );
 
     if (fullData) {
-      response = await ok(fullData);
+      if (fullData.message === "updated") {
+        
+        response = await ok(fullData);
+      }
+      else {
+        response = await conflict()
+      }
     } else {
       response = await badRequest();
     }

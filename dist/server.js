@@ -938,15 +938,31 @@ var getMyGoalRepository = (user, skip = 0, limit = 0, order, year, month, startG
   }
 });
 var insertGoal = (value) => __async(void 0, null, function* () {
+  var _a, _b;
   const collection = yield connectDatabase2();
-  const result = yield collection.insertOne(value);
-  if (result) {
+  const response = yield collection.findOneAndUpdate(
+    {
+      user: value.user,
+      month: value.month,
+      year: value.year
+    },
+    { $setOnInsert: value },
+    {
+      upsert: true,
+      returnDocument: "after",
+      includeResultMetadata: true
+      // ESSENCIAL para ver o que aconteceu
+    }
+  );
+  if ((_a = response.lastErrorObject) == null ? void 0 : _a.upserted) {
     return {
       message: "created",
-      _id: result.insertedId
+      _id: response.lastErrorObject.upserted
     };
   }
-  return;
+  if ((_b = response.lastErrorObject) == null ? void 0 : _b.updatedExisting) {
+    return;
+  }
 });
 var deleteGoalRepository = (user, _id) => __async(void 0, null, function* () {
   const collection = yield connectDatabase2();
@@ -962,7 +978,7 @@ var deleteGoalRepository = (user, _id) => __async(void 0, null, function* () {
       return;
     }
   } catch (error) {
-    console.error("Error deleting food:", error);
+    console.error("Error ", error);
     return;
   }
 });
@@ -979,26 +995,33 @@ var deleteGoalAllRepository = (user) => __async(void 0, null, function* () {
       return;
     }
   } catch (error) {
-    console.error("Error deleting food:", error);
+    console.error("Error ", error);
     return;
   }
 });
 var updateGoalRepository = (user, year, month, bodyValue, _id) => __async(void 0, null, function* () {
   const collection = yield connectDatabase2();
+  const targetId = new import_mongodb2.ObjectId(_id);
   try {
-    const filter = {
+    const conflict2 = yield collection.findOne({
       user,
-      _id: new import_mongodb2.ObjectId(_id)
-    };
+      month: bodyValue.month,
+      year: bodyValue.year,
+      _id: { $ne: targetId }
+      // "Not Equal" ao ID 
+    });
+    if (conflict2) {
+      return { message: "conflict" };
+    }
+    const filter = { _id: targetId, user };
     const result = yield collection.replaceOne(filter, bodyValue);
     if (result.modifiedCount === 1) {
       return { message: "updated" };
-    } else {
-      return;
     }
-  } catch (error) {
-    console.error("Error deleting food:", error);
     return;
+  } catch (error) {
+    console.error("Error ", error);
+    return { message: "error" };
   }
 });
 
@@ -1460,6 +1483,9 @@ var createGoalService = (bodyValue, authHeader) => __async(void 0, null, functio
     const data = yield insertGoal(bodyValue);
     if (data) {
       response = yield created();
+      response.body = data;
+    } else {
+      response = yield conflict();
     }
   } else {
     response = yield badRequest();
@@ -1485,7 +1511,11 @@ var updateGoalService = (authHeader, bodyValue, id) => __async(void 0, null, fun
       id
     );
     if (fullData) {
-      response = yield ok(fullData);
+      if (fullData.message === "updated") {
+        response = yield ok(fullData);
+      } else {
+        response = yield conflict();
+      }
     } else {
       response = yield badRequest();
     }

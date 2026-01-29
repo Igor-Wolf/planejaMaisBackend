@@ -92,17 +92,35 @@ export const getMyGoalRepository = async (
 export const insertGoal = async (value: GoalModel) => {
   const collection = await connectDatabase();
 
-  const result = await collection.insertOne(value);
-
-  if (result) {
+  const response = await collection.findOneAndUpdate(
+    {
+      user: value.user,
+      month: value.month,
+      year: value.year,
+    },
+    { $setOnInsert: value },
+    {
+      upsert: true,
+      returnDocument: "after",
+      includeResultMetadata: true // ESSENCIAL para ver o que aconteceu
+    }
+  );
+  
+  if (response.lastErrorObject?.upserted) {
     return {
+      
       message: "created",
-      _id: result.insertedId,
+      _id: response.lastErrorObject.upserted 
     };
   }
 
-  return;
+  
+  if (response.lastErrorObject?.updatedExisting) {
+    return 
+  }
 };
+
+
 
 // -------------------------------------------------------- DELETE
 
@@ -125,7 +143,7 @@ export const deleteGoalRepository = async (
       return;
     }
   } catch (error) {
-    console.error("Error deleting food:", error);
+    console.error("Error ", error);
     return;
   }
 };
@@ -148,7 +166,7 @@ export const deleteGoalAllRepository = async (
       return;
     }
   } catch (error) {
-    console.error("Error deleting food:", error);
+    console.error("Error ", error);
     return;
   }
 };
@@ -163,21 +181,33 @@ export const updateGoalRepository = async (
   _id: string
 ) => {
   const collection = await connectDatabase();
+  const targetId = new ObjectId(_id);
 
   try {
-    const filter = {
+    
+    const conflict = await collection.findOne({
       user: user,
-      _id: new ObjectId(_id)
-    };
+      month: bodyValue.month,
+      year: bodyValue.year,
+      _id: { $ne: targetId } // "Not Equal" ao ID 
+    });
+
+    if (conflict) {
+      return { message: "conflict"};
+    }
+
+    
+    const filter = { _id: targetId, user: user };
     const result = await collection.replaceOne(filter, bodyValue);
 
     if (result.modifiedCount === 1) {
       return { message: "updated" };
-    } else {
-      return;
     }
+    
+    return ;
+
   } catch (error) {
-    console.error("Error deleting food:", error);
-    return;
+    console.error("Error ", error);
+    return { message: "error" };
   }
 };
