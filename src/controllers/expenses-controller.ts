@@ -47,8 +47,8 @@ export const getExpenseByCategory = async (req: Request, res: Response) => {
 export const getExpenseByDate = async (req: Request, res: Response) => {
   const authHeader = req.headers.authorization;
   const { date } = req.params;
-  const { skip, limit, order } = req.query;  
-  const response = await getExpenseByDateService(authHeader, date, skip, limit, order);
+  const { skip, limit, order, category, description, startValue, endValue} = req.query;  
+  const response = await getExpenseByDateService(authHeader, date, skip, limit, order, category, description, startValue, endValue);
   res.status(response.statusCode).json(response.body);
 };
 export const getExpenseAll = async (req: Request, res: Response) => {

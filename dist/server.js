@@ -1086,10 +1086,10 @@ var getExpenseByCategoryRepository = (user, category) => __async(void 0, null, f
   }
   return [];
 });
-var getExpenseByDateRepository = (user, date3, skip = 0, limit = 0, order) => __async(void 0, null, function* () {
+var getExpenseByDateRepository = (user, date3, skip = 0, limit = 0, order, category, description, startValue, endValue) => __async(void 0, null, function* () {
   const collection = yield connectDatabase3();
   const sort = order === "asc" ? 1 : -1;
-  const result = yield collection.find({
+  const filter = {
     user,
     date: {
       $regex: `^${date3}`,
@@ -1097,11 +1097,37 @@ var getExpenseByDateRepository = (user, date3, skip = 0, limit = 0, order) => __
       $options: "i"
       // case-insensitive (opcional)
     }
-  }).sort({ date: sort }).skip(parseInt(skip)).limit(parseInt(limit)).toArray();
-  if (result && result.length > 0) {
-    return result;
+  };
+  if (startValue || endValue) {
+    filter.value = {};
+    if (startValue) filter.value.$gte = parseFloat(startValue);
+    if (endValue) filter.value.$lte = parseFloat(endValue);
   }
-  return [];
+  if (category) {
+    filter.category = {
+      $regex: category,
+      // contém
+      $options: "i"
+      // case-insensitive (opcional)
+    };
+  }
+  if (description) {
+    filter.description = {
+      $regex: description,
+      // contém
+      $options: "i"
+      // case-insensitive (opcional)
+    };
+  }
+  try {
+    const result = yield collection.find(filter).sort({ date: sort }).skip(parseInt(skip)).limit(parseInt(limit)).toArray();
+    if (result && result.length > 0) {
+      return result;
+    }
+    return [];
+  } catch (e) {
+    return;
+  }
 });
 var getExpenseAllRepository = (user, skip = 0, limit = 0, order) => __async(void 0, null, function* () {
   const collection = yield connectDatabase3();
@@ -1709,12 +1735,12 @@ var getExpenseByCategoryService = (authHeader, category) => __async(void 0, null
   }
   return response;
 });
-var getExpenseByDateService = (authHeader, date3, skip, limit, order) => __async(void 0, null, function* () {
+var getExpenseByDateService = (authHeader, date3, skip, limit, order, category, description, startValue, endValue) => __async(void 0, null, function* () {
   let response = null;
   let data = null;
   data = yield auth(authHeader);
   if (data && typeof data !== "string") {
-    const fullData = yield getExpenseByDateRepository(data.user, date3, skip, limit, order);
+    const fullData = yield getExpenseByDateRepository(data.user, date3, skip, limit, order, category, description, startValue, endValue);
     if (fullData) {
       response = yield ok(fullData);
     } else {
@@ -1843,8 +1869,8 @@ var getExpenseByCategory = (req, res) => __async(void 0, null, function* () {
 var getExpenseByDate = (req, res) => __async(void 0, null, function* () {
   const authHeader = req.headers.authorization;
   const { date: date3 } = req.params;
-  const { skip, limit, order } = req.query;
-  const response = yield getExpenseByDateService(authHeader, date3, skip, limit, order);
+  const { skip, limit, order, category, description, startValue, endValue } = req.query;
+  const response = yield getExpenseByDateService(authHeader, date3, skip, limit, order, category, description, startValue, endValue);
   res.status(response.statusCode).json(response.body);
 });
 var getExpenseAll = (req, res) => __async(void 0, null, function* () {
@@ -1935,9 +1961,9 @@ var getAllValuesRepository = (user, startDate, endDate, category, description, s
     return;
   }
 });
-var getAllDateValuesRepository = (user, date3) => __async(void 0, null, function* () {
+var getAllDateValuesRepository = (user, date3, category, description, startValue, endValue) => __async(void 0, null, function* () {
   const collection = yield connectDatabase4();
-  const result = yield collection.find({
+  const filter = {
     user,
     date: {
       $regex: `^${date3}`,
@@ -1945,11 +1971,37 @@ var getAllDateValuesRepository = (user, date3) => __async(void 0, null, function
       $options: "i"
       // case-insensitive (opcional)
     }
-  }).toArray();
-  if (result && result.length > 0) {
-    return result;
+  };
+  if (startValue || endValue) {
+    filter.value = {};
+    if (startValue) filter.value.$gte = parseFloat(startValue);
+    if (endValue) filter.value.$lte = parseFloat(endValue);
   }
-  return [];
+  if (category) {
+    filter.category = {
+      $regex: category,
+      // contém
+      $options: "i"
+      // case-insensitive (opcional)
+    };
+  }
+  if (description) {
+    filter.description = {
+      $regex: description,
+      // contém
+      $options: "i"
+      // case-insensitive (opcional)
+    };
+  }
+  try {
+    const result = yield collection.find(filter).toArray();
+    if (result && result.length > 0) {
+      return result;
+    }
+    return [];
+  } catch (e) {
+    return;
+  }
 });
 
 // src/services/operations-service.ts
@@ -1974,12 +2026,12 @@ var getAllValuesService = (authHeader, startDate, endDate, category, description
   }
   return response;
 });
-var getAllDateValuesService = (authHeader, date3) => __async(void 0, null, function* () {
+var getAllDateValuesService = (authHeader, date3, category, description, startValue, endValue) => __async(void 0, null, function* () {
   let response = null;
   let data = null;
   data = yield auth(authHeader);
   if (data && typeof data !== "string") {
-    const fullData = yield getAllDateValuesRepository(data.user, date3);
+    const fullData = yield getAllDateValuesRepository(data.user, date3, category, description, startValue, endValue);
     if (fullData) {
       let values = 0;
       fullData.forEach((element) => {
@@ -2006,7 +2058,8 @@ var getAllValues = (req, res) => __async(void 0, null, function* () {
 var getAllDateValues = (req, res) => __async(void 0, null, function* () {
   const authHeader = req.headers.authorization;
   const { date: date3 } = req.params;
-  const response = yield getAllDateValuesService(authHeader, date3);
+  const { category, description, startValue, endValue } = req.query;
+  const response = yield getAllDateValuesService(authHeader, date3, category, description, startValue, endValue);
   res.status(response.statusCode).json(response.body);
 });
 

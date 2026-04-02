@@ -38,7 +38,7 @@ export const getAllValuesRepository = async (
   category: string,
   description: string,
   startValue: number,
-  endValue: number
+  endValue: number,
 ) => {
   const collection = await connectDatabase();
 
@@ -85,23 +85,50 @@ export const getAllValuesRepository = async (
 
 export const getAllDateValuesRepository = async (
   user: string,
-  date: string
+  date: string,
+  category: string,
+  description: string,
+  startValue: number,
+  endValue: number,
 ) => {
   const collection = await connectDatabase();
 
-  const result = await collection
-    .find({
-      user: user,
-      date: {
-        $regex: `^${date}`, // contém
-        $options: "i", // case-insensitive (opcional)
-      },
-    })
-    .toArray();
+  const filter: any = {
+    user,
+    date: {
+      $regex: `^${date}`, // contém
+      $options: "i", // case-insensitive (opcional)
+    },
+  };
 
-  if (result && result.length > 0) {
-    return result;
+  if (startValue || endValue) {
+    filter.value = {};
+    if (startValue) filter.value.$gte = parseFloat(startValue);
+    if (endValue) filter.value.$lte = parseFloat(endValue);
   }
 
-  return [];
+  if (category) {
+    filter.category = {
+      $regex: category, // contém
+      $options: "i", // case-insensitive (opcional)
+    };
+  }
+  if (description) {
+    filter.description = {
+      $regex: description, // contém
+      $options: "i", // case-insensitive (opcional)
+    };
+  }
+
+  try {
+    const result = await collection.find(filter).toArray();
+
+    if (result && result.length > 0) {
+      return result;
+    }
+
+    return [];
+  } catch {
+    return;
+  }
 };

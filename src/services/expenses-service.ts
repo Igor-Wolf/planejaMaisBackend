@@ -121,6 +121,10 @@ export const getExpenseByDateService = async (
   skip: number,
   limit: number,
   order: string,
+  category: string,
+  description: string,
+  startValue: number,
+  endValue: number
 ) => {
   let response = null;
   let data = null;
@@ -128,7 +132,7 @@ export const getExpenseByDateService = async (
   data = await auth(authHeader); /// verificação do token
 
   if (data && typeof data !== "string") {
-    const fullData = await getExpenseByDateRepository(data.user, date, skip, limit, order);
+    const fullData = await getExpenseByDateRepository(data.user, date, skip, limit, order, category, description, startValue, endValue);
 
     if (fullData) {
       response = await ok(fullData);

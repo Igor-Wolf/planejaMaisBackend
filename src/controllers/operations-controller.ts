@@ -12,7 +12,8 @@ export const getAllValues = async (req: Request, res: Response) => {
 export const getAllDateValues = async (req: Request, res: Response) => {
   const authHeader = req.headers.authorization;
   const { date } = req.params;
-  const response = await getAllDateValuesService(authHeader, date);
+  const { category, description, startValue, endValue } = req.query;
+  const response = await getAllDateValuesService(authHeader, date, category, description, startValue, endValue );
   res.status(response.statusCode).json(response.body);
 };
 

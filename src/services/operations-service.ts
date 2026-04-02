@@ -39,7 +39,7 @@ export const getAllValuesService = async (authHeader: string | undefined,
 
 export const getAllDateValuesService = async (
   authHeader: string | undefined,
-  date: string
+  date: string, category: string, description: string, startValue: number, endValue: number 
 ) => {
   let response = null;
   let data = null;
@@ -47,7 +47,7 @@ export const getAllDateValuesService = async (
   data = await auth(authHeader); /// verificação do token
 
   if (data && typeof data !== "string") {
-    const fullData = await getAllDateValuesRepository(data.user, date);
+    const fullData = await getAllDateValuesRepository(data.user, date, category, description, startValue, endValue);
 
     if (fullData) {
       let values = 0;

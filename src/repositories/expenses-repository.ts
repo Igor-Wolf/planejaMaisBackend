@@ -49,7 +49,7 @@ export const getExpenseByIdRepository = async (user: string, _id: string) => {
 };
 export const getExpenseByDescriptionRepository = async (
   user: string,
-  description: string
+  description: string,
 ) => {
   const collection = await connectDatabase();
 
@@ -71,7 +71,7 @@ export const getExpenseByDescriptionRepository = async (
 };
 export const getExpenseByCategoryRepository = async (
   user: string,
-  category: string
+  category: string,
 ) => {
   const collection = await connectDatabase();
 
@@ -96,35 +96,64 @@ export const getExpenseByDateRepository = async (
   date: string,
   skip: number = 0,
   limit: number = 0,
-  order: string
+  order: string,
+  category: string,
+  description: string,
+  startValue: number,
+  endValue: number,
 ) => {
   const collection = await connectDatabase();
   const sort = order === "asc" ? 1 : -1;
 
-  const result = await collection
-    .find({
-      user: user,
-      date: {
-        $regex: `^${date}`, // contém
-        $options: "i", // case-insensitive (opcional)
-      },
-    })
-    .sort({ date: sort })
-    .skip(parseInt(skip))
-    .limit(parseInt(limit))
-    .toArray();
+  const filter: any = {
+    user,
+    date: {
+      $regex: `^${date}`, // contém
+      $options: "i", // case-insensitive (opcional)
+    },
+  };
 
-  if (result && result.length > 0) {
-    return result;
+  if (startValue || endValue) {
+    filter.value = {};
+    if (startValue) filter.value.$gte = parseFloat(startValue);
+    if (endValue) filter.value.$lte = parseFloat(endValue);
   }
 
-  return [];
+  if (category) {
+    filter.category = {
+      $regex: category, // contém
+      $options: "i", // case-insensitive (opcional)
+    };
+  }
+  if (description) {
+    filter.description = {
+      $regex: description, // contém
+      $options: "i", // case-insensitive (opcional)
+    };
+  }
+
+  try {
+    const result = await collection
+      .find(filter)
+      .sort({ date: sort })
+      .skip(parseInt(skip))
+      .limit(parseInt(limit))
+      .toArray();
+
+    if (result && result.length > 0) {
+      return result;
+    }
+
+    return [];
+  } catch {
+    return;
+  }
 };
 export const getExpenseAllRepository = async (
   user: string,
   skip: number = 0,
   limit: number = 0,
-  order: string
+  order: string,
 ) => {
   const collection = await connectDatabase();
   const sort = order === "asc" ? 1 : -1;
@@ -158,7 +187,7 @@ export const getExpenseByFilterRepository = async (
   category: string,
   description: string,
   startValue: number,
-  endValue: number
+  endValue: number,
 ) => {
   const collection = await connectDatabase();
   const sort = order === "asc" ? 1 : -1;
@@ -231,7 +260,7 @@ export const insertExpense = async (value: ExpensesModel) => {
 export const updateExpenseRepository = async (
   user: string,
   bodyValue: ExpensesModel,
-  id: string
+  id: string,
 ) => {
   const collection = await connectDatabase();
 
