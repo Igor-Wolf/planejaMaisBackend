@@ -2010,13 +2010,23 @@ var getAllValuesService = (authHeader, startDate, endDate, category, description
   let data = null;
   data = yield auth(authHeader);
   if (data && typeof data !== "string") {
-    const fullData = yield getAllValuesRepository(data.user, startDate, endDate, category, description, startValue, endValue);
+    const fullData = yield getAllValuesRepository(
+      data.user,
+      startDate,
+      endDate,
+      category,
+      description,
+      startValue,
+      endValue
+    );
     if (fullData) {
       let values = 0;
       fullData.forEach((element) => {
         values += element.value;
       });
-      const returnData = { value: (Math.trunc(values * 100) / 100).toFixed(2) };
+      console.log(values);
+      const returnData = { value: (Math.round(values * 100) / 100).toFixed(2) };
+      console.log(returnData);
       response = yield ok(returnData);
     } else {
       response = yield badRequest();
@@ -2031,13 +2041,20 @@ var getAllDateValuesService = (authHeader, date3, category, description, startVa
   let data = null;
   data = yield auth(authHeader);
   if (data && typeof data !== "string") {
-    const fullData = yield getAllDateValuesRepository(data.user, date3, category, description, startValue, endValue);
+    const fullData = yield getAllDateValuesRepository(
+      data.user,
+      date3,
+      category,
+      description,
+      startValue,
+      endValue
+    );
     if (fullData) {
       let values = 0;
       fullData.forEach((element) => {
         values += element.value;
       });
-      const returnData = { value: (Math.trunc(values * 100) / 100).toFixed(2) };
+      const returnData = { value: (Math.round(values * 100) / 100).toFixed(2) };
       response = yield ok(returnData);
     } else {
       response = yield badRequest();
